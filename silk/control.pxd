@@ -1,4 +1,4 @@
-cdef extern from "src/SKP_Silk_control.h":
+cdef extern from "src/SKP_Silk_control.h" nogil:
     ctypedef struct SKP_SILK_SDK_EncControlStruct:
         # I:   Input signal sampling rate in Hertz; 8000/12000/16000/24000
         int API_sampleRate

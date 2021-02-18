@@ -32,7 +32,9 @@ def iter_c_source(path: str, suffix=".c"):
 
 ext_modules = [
     Extension("silk.lowlevelapi",
-              sources=["silk/lowlevelapi.pyx"] + list(iter_c_source("silk/src")), library_dirs=["silk/src", "silk"])
+              sources=["silk/lowlevelapi.pyx"] + list(iter_c_source("silk/src")), library_dirs=["silk/src", "silk"]),
+    Extension("silk.transcoder",
+              sources=["silk/transcoder.pyx"] + list(iter_c_source("silk/src")), library_dirs=["silk/src", "silk"])
 ]
 
 
