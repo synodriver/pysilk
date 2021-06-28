@@ -1,5 +1,5 @@
 from .cimport control
-cdef extern from "src/SKP_Silk_SDK_API.h":
+cdef extern from "SKP_Silk_SDK_API.h":
     # Struct for TOC (Table of Contents)
     ctypedef struct SKP_Silk_TOC_struct:
         int     framesInPacket  # Number of 20 ms frames in packet

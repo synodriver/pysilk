@@ -1,4 +1,4 @@
-cdef extern from "src/SKP_Silk_structs.h" nogil:
+cdef extern from "SKP_Silk_structs.h" nogil:
     # Noise shaping quantization state
     ctypedef struct SKP_Silk_nsq_state:
         short   xq[2 * 20 * 24]  # Buffer for quantized output signal */

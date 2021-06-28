@@ -1,41 +1,13 @@
 # -*- coding: utf-8 -*-
 import os
 import re
-from collections import defaultdict
 
-from setuptools import Extension, setup, find_packages
-from setuptools.command.build_ext import build_ext
-from Cython.Build import cythonize
-
-BUILD_ARGS = defaultdict(lambda: ['-O3', '-g0'])
-
-for compiler, args in [
-    ('msvc', ['/EHsc', '/DHUNSPELL_STATIC', "/Oi", "/O2", "/Ot"]),
-    ('gcc', ['-O3', '-g0'])]:
-    BUILD_ARGS[compiler] = args
+from skbuild import setup
 
 
-class build_ext_compiler_check(build_ext):
-    def build_extensions(self):
-        compiler = self.compiler.compiler_type
-        args = BUILD_ARGS[compiler]
-        for ext in self.extensions:
-            ext.extra_compile_args = args
-        super().build_extensions()
-
-
-def iter_c_source(path: str, suffix=".c"):
-    for file in os.listdir(path):
-        if file.endswith(suffix):
-            yield os.path.join(path, file)
-
-
-ext_modules = [
-    Extension("silk.lowlevelapi",
-              sources=["silk/lowlevelapi.pyx"] + list(iter_c_source("silk/src")), library_dirs=["silk/src", "silk"]),
-    Extension("silk.transcoder",
-              sources=["silk/transcoder.pyx"] + list(iter_c_source("silk/src")), library_dirs=["silk/src", "silk"])
-]
+def get_dis():
+    with open("README.markdown", "r", encoding="utf-8") as f:
+        return f.read()
 
 
 def get_version() -> str:
@@ -46,12 +18,7 @@ def get_version() -> str:
     return result[0]
 
 
-def get_dis():
-    with open("README.md", "r", encoding="utf-8") as f:
-        return f.read()
-
-
-packages = find_packages(exclude=('test', 'tests.*', "test*"))
+# packages = find_packages(exclude=('test', 'tests.*', "test*"))
 
 
 def main():
@@ -62,7 +29,7 @@ def main():
         name="silk",
         version=version,
         url="https://github.com/synodriver/silk",
-        packages=packages,
+        packages=["silk"],
         keywords=["silk", "encode", "decode"],
         description="silk encode and decode",
         long_description_content_type="text/markdown",
@@ -72,7 +39,6 @@ def main():
         python_requires=">=3.6",
         install_requires=["cython"],
         license='GPLv3',
-        ext_modules=cythonize(ext_modules),
         classifiers=[
             "Development Status :: 4 - Beta",
             "Operating System :: OS Independent",
@@ -87,8 +53,8 @@ def main():
             "Programming Language :: Python :: 3.9",
             "Programming Language :: Python :: Implementation :: CPython"
         ],
-        cmdclass={'build_ext': build_ext_compiler_check},
-        include_package_data=True
+        include_package_data=True,
+        zip_safe=True
     )
 
 

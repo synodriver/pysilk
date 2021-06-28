@@ -1,2 +1,2 @@
-cdef extern from "src/SKP_Silk_typedef.h" nogil:
+cdef extern from "SKP_Silk_typedef.h" nogil:
     pass

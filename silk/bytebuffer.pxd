@@ -1,4 +1,4 @@
-cdef extern from "bytebuffer/bytebuffer.h" nogil:
+cdef extern from "bytebuffer.h" nogil:
     ctypedef enum BufferException:
         Ok = <unsigned char> 0  # 0
         MemoryException  # 1 没内存了

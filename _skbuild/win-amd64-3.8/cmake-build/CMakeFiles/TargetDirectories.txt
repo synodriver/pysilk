@@ -1,0 +1,12 @@
+F:/jhc/pysilk/_skbuild/win-amd64-3.8/cmake-build/CMakeFiles/install/local.dir
+F:/jhc/pysilk/_skbuild/win-amd64-3.8/cmake-build/CMakeFiles/install.dir
+F:/jhc/pysilk/_skbuild/win-amd64-3.8/cmake-build/CMakeFiles/edit_cache.dir
+F:/jhc/pysilk/_skbuild/win-amd64-3.8/cmake-build/CMakeFiles/rebuild_cache.dir
+F:/jhc/pysilk/_skbuild/win-amd64-3.8/cmake-build/CMakeFiles/list_install_components.dir
+F:/jhc/pysilk/_skbuild/win-amd64-3.8/cmake-build/silk/CMakeFiles/silk.dir
+F:/jhc/pysilk/_skbuild/win-amd64-3.8/cmake-build/silk/CMakeFiles/list_install_components.dir
+F:/jhc/pysilk/_skbuild/win-amd64-3.8/cmake-build/silk/CMakeFiles/transcoder.dir
+F:/jhc/pysilk/_skbuild/win-amd64-3.8/cmake-build/silk/CMakeFiles/install/local.dir
+F:/jhc/pysilk/_skbuild/win-amd64-3.8/cmake-build/silk/CMakeFiles/install.dir
+F:/jhc/pysilk/_skbuild/win-amd64-3.8/cmake-build/silk/CMakeFiles/edit_cache.dir
+F:/jhc/pysilk/_skbuild/win-amd64-3.8/cmake-build/silk/CMakeFiles/rebuild_cache.dir

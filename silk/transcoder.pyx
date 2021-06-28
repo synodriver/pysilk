@@ -6,7 +6,6 @@ from cpython.mem cimport PyMem_Malloc, PyMem_Free
 
 from .cimport api
 from .control cimport SKP_SILK_SDK_EncControlStruct, SKP_SILK_SDK_DecControlStruct
-from .cimport bytebuffer
 from .Decoder cimport GetHighResolutionTime
 
 DEF MAX_BYTES_PER_FRAME = 1024
@@ -201,7 +200,7 @@ cdef class Transcoder:
                       str output_file_name,
                       int API_Fs_Hz,
                       float loss_prob,
-                      bint quiet):
+                      bint quiet=0):
         input_file_name_byte = input_file_name.encode("utf-8")
         output_file_name_byte = output_file_name.encode("utf-8")
         cdef:
