@@ -1,7 +1,7 @@
 # cython: language_level=3
 from libc.string cimport memcpy
 
-from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
+from cpython.mem cimport PyMem_Malloc
 
 from .cimport api as api_
 from .cimport control

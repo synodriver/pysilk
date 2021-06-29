@@ -1,6 +1,7 @@
 cmake-build-debug/
 cmake-build-release/
 silk-v3-decoder-master/
+*/__pycache__/
 build/
 lib/
 /src/

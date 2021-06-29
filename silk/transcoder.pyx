@@ -1,12 +1,12 @@
 # cython: language_level=3
 from cython import cdivision
-from libc.string cimport strlen, memcpy, strcmp, memmove
+from libc.string cimport strlen, strcmp, memmove
 from libc.stdio cimport FILE, fopen, fread, fwrite, fclose
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 
-from .cimport api
-from .control cimport SKP_SILK_SDK_EncControlStruct, SKP_SILK_SDK_DecControlStruct
-from .Decoder cimport GetHighResolutionTime
+from silk cimport api
+from silk.control cimport SKP_SILK_SDK_EncControlStruct, SKP_SILK_SDK_DecControlStruct
+from silk.Decoder cimport GetHighResolutionTime
 
 DEF MAX_BYTES_PER_FRAME = 1024
 DEF MAX_INPUT_FRAMES = 5
@@ -33,7 +33,7 @@ cdef void swap_endian(
         short vec[],  #  I/O array of */
         int len):  #  I   length      */
     cdef:
-        int i
+        Py_ssize_t i
         short tmp
         unsigned char *p1
         unsigned char *p2
@@ -51,9 +51,6 @@ class TransCodeException(Exception):
 
 
 cdef class Transcoder:
-    def __init__(self):
-        pass
-
     @cdivision(True)
     cpdef int encode_file(self,
                           str input_file_name,
@@ -79,25 +76,25 @@ cdef class Transcoder:
         output_file_name_byte = output_file_name.encode("utf-8")
         cdef:
             # char*speechInFileName = input_file_name.encode("utf-8")
-            char*speechInFileName = input_file_name_byte
+            char *speechInFileName = input_file_name_byte
             # char*bitOutFileName = output_file_name.encode("utf-8")
-            char*bitOutFileName = output_file_name_byte
+            char *bitOutFileName = output_file_name_byte
 
             unsigned long tottime = 0, starttime
 
             double filetime
             size_t counter
             int k, totPackets = 0, totActPackets = 0, ret
-            short nBytes;
+            short nBytes
             double sumBytes = 0.0, sumActBytes = 0.0, avg_rate, act_rate, nrg
             # unsigned char payload[max_bytes_per_frame * max_input_frames]
-            unsigned char*payload = <unsigned char*> PyMem_Malloc(max_bytes_per_frame * max_input_frames)
+            unsigned char *payload = <unsigned char *> PyMem_Malloc(max_bytes_per_frame * max_input_frames)
             # short in_[frame_length_ms * max_api_fs_khz * max_input_frames]
-            short*in_ = <short*> PyMem_Malloc(frame_length_ms * max_api_fs_khz * max_input_frames)
-            FILE*bitOutFile
-            FILE*speechInFile
+            short *in_ = <short *> PyMem_Malloc(frame_length_ms * max_api_fs_khz * max_input_frames)
+            FILE *bitOutFile
+            FILE *speechInFile
             int encSizeBytes
-            void*psEnc
+            void *psEnc
             int smplsSinceLastPacket = 0
             int frameSizeReadFromFile_ms = 20
 
@@ -127,7 +124,7 @@ cdef class Transcoder:
         if tencent:
             # cdef const unsigned char Tencent_break = 0x02
             fwrite(&Tencent_break, sizeof(char), 1, bitOutFile)
-        cdef const char*Silk_header = "#!SILK_V3"
+        cdef const char *Silk_header = "#!SILK_V3"
         fwrite(Silk_header, sizeof(char), strlen(Silk_header), bitOutFile)
         ret = api.SKP_Silk_SDK_Get_Encoder_Size(&encSizeBytes)
         if ret:
@@ -204,10 +201,10 @@ cdef class Transcoder:
         input_file_name_byte = input_file_name.encode("utf-8")
         output_file_name_byte = output_file_name.encode("utf-8")
         cdef:
-            char*bitInFileName = input_file_name_byte
-            char*speechOutFileName = output_file_name_byte
-            FILE*bitInFile
-            FILE*speechOutFile
+            char *bitInFileName = input_file_name_byte
+            char *speechOutFileName = output_file_name_byte
+            FILE *bitInFile
+            FILE *speechOutFile
             char header_buf[50]
             size_t counter
             unsigned long tottime, starttime
@@ -215,27 +212,27 @@ cdef class Transcoder:
             int totPackets, i, k
             short ret, len, tot_len, nBytes
             unsigned char payload[MAX_BYTES_PER_FRAME * MAX_INPUT_FRAMES * (MAX_LBRR_DELAY + 1)]
-            unsigned char*payloadEnd = NULL
-            unsigned char*payloadToDec = NULL
+            unsigned char *payloadEnd = NULL
+            unsigned char *payloadToDec = NULL
             unsigned char FECpayload[MAX_BYTES_PER_FRAME * MAX_INPUT_FRAMES]
-            unsigned char*payloadPtr
+            unsigned char *payloadPtr
             short out[((FRAME_LENGTH_MS * MAX_API_FS_KHZ) << 1) * MAX_INPUT_FRAMES]
             short *outPtr
             short nBytesFEC
             short nBytesPerPacket[MAX_LBRR_DELAY + 1]
             short totBytes
             int decSizeBytes, packetSize_ms, frames, lost
-            void*psDec
+            void *psDec
             SKP_SILK_SDK_DecControlStruct DecControl
             unsigned char Tencent_break = 0x02
-        bitInFile = fopen(bitInFileName, "rb");
+        bitInFile = fopen(bitInFileName, "rb")
         if bitInFile is NULL:
             raise FileNotFoundError(f"Error: could not open input file {bitInFileName}")
 
         # Check Silk header
-        fread(header_buf, sizeof(char), 1, bitInFile);
+        fread(header_buf, sizeof(char), 1, bitInFile)
         header_buf[1] = <unsigned char> 0  # * Terminate with a null character
-        if strcmp(header_buf, <char*> &Tencent_break):
+        if strcmp(header_buf, <char *> &Tencent_break):
             counter = fread(header_buf, sizeof(char), strlen("!SILK_V3"), bitInFile)
             header_buf[strlen("!SILK_V3")] = <unsigned char> 0  # * Terminate with a null character
             if strcmp(header_buf, "!SILK_V3") != 0:
@@ -266,7 +263,7 @@ cdef class Transcoder:
         # Reset decoder
         ret = api.SKP_Silk_SDK_InitDecoder(psDec)
         # if ret:
-        #     print("\nSKP_Silk_InitDecoder returned %d", ret);
+        #     print("\nSKP_Silk_InitDecoder returned %d", ret)
         totPackets = 0
         tottime = 0
         payloadEnd = payload
@@ -329,7 +326,7 @@ cdef class Transcoder:
                 frames = 0
                 ret = api.SKP_Silk_SDK_Decode(psDec, &DecControl, 0, payloadToDec, nBytes, outPtr, &len)
                 # if ret:
-                #     printf("\nSKP_Silk_SDK_Decode returned %d", ret);
+                #     printf("\nSKP_Silk_SDK_Decode returned %d", ret)
 
                 frames += 1
                 outPtr += len
@@ -343,7 +340,7 @@ cdef class Transcoder:
                     # Decode 20 ms */
                     ret = api.SKP_Silk_SDK_Decode(psDec, &DecControl, 0, payloadToDec, nBytes, outPtr, &len)
                     # if ret:
-                    #     printf("\nSKP_Silk_SDK_Decode returned %d", ret);
+                    #     printf("\nSKP_Silk_SDK_Decode returned %d", ret)
 
                     frames += 1
                     outPtr += len
@@ -365,14 +362,14 @@ cdef class Transcoder:
                     outPtr += len
                     tot_len += len
 
-            packetSize_ms = <int>(tot_len / (DecControl.API_sampleRate / 1000))
+            packetSize_ms = <int> (tot_len / (DecControl.API_sampleRate / 1000))
             tottime += GetHighResolutionTime() - starttime
             totPackets += 1
 
             # Write output to file */
             fwrite(out, sizeof(short), tot_len, speechOutFile)
             # Update buffer */
-            totBytes = 0;
+            totBytes = 0
             for i in range(MAX_LBRR_DELAY):
                 totBytes += nBytesPerPacket[i + 1]
             # Check if the received totBytes is valid */
@@ -415,9 +412,9 @@ cdef class Transcoder:
             if lost == 0:
                 # No loss: Decode all frames in the packet */
                 frames = 0
-                ret = api.SKP_Silk_SDK_Decode(psDec, &DecControl, 0, payloadToDec, nBytes, outPtr, &len);
+                ret = api.SKP_Silk_SDK_Decode(psDec, &DecControl, 0, payloadToDec, nBytes, outPtr, &len)
                 # if ret:
-                #     printf("\nSKP_Silk_SDK_Decode returned %d", ret);
+                #     printf("\nSKP_Silk_SDK_Decode returned %d", ret)
                 frames += 1
                 outPtr += len
                 tot_len += len
@@ -428,9 +425,9 @@ cdef class Transcoder:
                     frames = 0
                 while DecControl.moreInternalDecoderFrames:
                     # Decode 20 ms */
-                    ret = api.SKP_Silk_SDK_Decode(psDec, &DecControl, 0, payloadToDec, nBytes, outPtr, &len);
+                    ret = api.SKP_Silk_SDK_Decode(psDec, &DecControl, 0, payloadToDec, nBytes, outPtr, &len)
                     # if ret:
-                    #     printf("\nSKP_Silk_SDK_Decode returned %d", ret);
+                    #     printf("\nSKP_Silk_SDK_Decode returned %d", ret)
                     frames += 1
                     outPtr += len
                     tot_len += len
@@ -447,18 +444,18 @@ cdef class Transcoder:
                 for i in range(DecControl.framesPerPacket):
                     ret = api.SKP_Silk_SDK_Decode(psDec, &DecControl, 1, payloadToDec, nBytes, outPtr, &len)
                     # if ret:
-                    #     print("\nSKP_Silk_Decode returned %d", ret);
+                    #     print("\nSKP_Silk_Decode returned %d", ret)
                     outPtr += len
                     tot_len += len
 
-            packetSize_ms = <int>(tot_len / (DecControl.API_sampleRate / 1000))
+            packetSize_ms = <int> (tot_len / (DecControl.API_sampleRate / 1000))
             tottime += GetHighResolutionTime() - starttime
             totPackets += 1
             # Write output to file */
             fwrite(out, sizeof(short), tot_len, speechOutFile)
 
             # Update Buffer */
-            totBytes = 0;
+            totBytes = 0
             for i in range(MAX_LBRR_DELAY):
                 totBytes += nBytesPerPacket[i + 1]
 

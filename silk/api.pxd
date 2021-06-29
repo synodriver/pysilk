@@ -1,4 +1,6 @@
+# cython: language_level=3
 from .cimport control
+
 cdef extern from "SKP_Silk_SDK_API.h":
     # Struct for TOC (Table of Contents)
     ctypedef struct SKP_Silk_TOC_struct:

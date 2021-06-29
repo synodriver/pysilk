@@ -1,3 +1,4 @@
+# cython: language_level=3
 cdef extern from "bytebuffer.h" nogil:
     ctypedef enum BufferException:
         Ok = <unsigned char> 0  # 0

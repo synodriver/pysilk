@@ -1,8 +1,27 @@
 # -*- coding: utf-8 -*-
 import os
 import re
+import shutil
 
 from skbuild import setup
+from Cython.Build import cythonize
+from setuptools import Extension
+
+extensions = [
+    # Extension("api", ["silk/lowlevelapi.pyx"],
+    #           include_dirs=["src"],
+    #           libraries=["silk"],
+    #           library_dirs=["./silk"],
+    #           # extra_link_args=["-silk/silk.dll"]
+    #           ),
+    # # Everything but primes.pyx is included here.
+    Extension("transcoder", ["silk/transcoder.pyx"],
+              include_dirs=["src"],
+              libraries=["silk"],
+              library_dirs=["./silk"],
+              # extra_link_args=["-silk/silk.dll"]
+              ),
+]
 
 
 def get_dis():
@@ -19,6 +38,10 @@ def get_version() -> str:
 
 
 # packages = find_packages(exclude=('test', 'tests.*', "test*"))
+def move_file(dst: str):
+    for file in os.listdir("."):
+        if os.path.splitext(file)[-1] in (".so", ".dll", ".lib", ".pyd"):
+            shutil.move(os.path.abspath(file), dst)
 
 
 def main():
@@ -54,8 +77,10 @@ def main():
             "Programming Language :: Python :: Implementation :: CPython"
         ],
         include_package_data=True,
-        zip_safe=True
+        zip_safe=True,
+        ext_modules=cythonize(extensions),
     )
+    move_file(os.path.join(os.path.dirname(__file__), "silk"))
 
 
 if __name__ == "__main__":

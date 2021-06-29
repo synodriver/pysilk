@@ -1,3 +1,4 @@
+# cython: language_level=3
 cdef extern from "SKP_Silk_structs.h" nogil:
     # Noise shaping quantization state
     ctypedef struct SKP_Silk_nsq_state:
