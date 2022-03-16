@@ -66,7 +66,7 @@ cdef void write_i16_le(object output, int16_t data, uint8_t le):
         swap_i16(&data)
     output.write(i16_to_bytes(data))
 
-cdef int16_t read_i16_le(object input, uint8_t le):  # todo 出来了负数
+cdef int16_t read_i16_le(object input, uint8_t le):
     chunk = input.read(2)  # type: bytes
     cdef int16_t data = bytes_to_i16(chunk)
     if not le:
@@ -88,7 +88,7 @@ cpdef void encode(object input,
                   bint use_inband_fec = False,
                   bint use_dtx = False,
                   bint tencent = True) with gil:
-    """encode(input: IO, output: IO, sample_rate: int, bit_rate: int, max_internal_sample_rate: int = 24000, packet_loss_percentage: int = 0, complexity: int = 2, use_inband_fec: bool = False, use_dtx: bool = False, tencent: bool = True) -> bytes
+    """encode(input: BinaryIO, output: BinaryIO, sample_rate: int, bit_rate: int, max_internal_sample_rate: int = 24000, packet_loss_percentage: int = 0, complexity: int = 2, use_inband_fec: bool = False, use_dtx: bool = False, tencent: bool = True) -> bytes
     
     encode pcm to silk
     :param input: BytesIO or an openfile with "rb" mode
@@ -178,7 +178,7 @@ cpdef void decode(object input,
                   bint more_internal_decoder_frames=False,
                   int32_t in_band_fec_offset=0,
                   bint loss=False) with gil:
-    """decode(input: IO, output: IO, sample_rate: int, frame_size: int = 0, frames_per_packet: int = 1, more_internal_decoder_frames: int = False, in_band_fec_offset: int = 0, loss: bool = False) -> bytes
+    """decode(input: BinaryIO, output: BinaryIO, sample_rate: int, frame_size: int = 0, frames_per_packet: int = 1, more_internal_decoder_frames: bool = False, in_band_fec_offset: int = 0, loss: bool = False) -> bytes
     
     decode silk to pcm
     :param input: 
@@ -228,6 +228,7 @@ cpdef void decode(object input,
     # cdef uint8_t buf[frame_size]  # otherwise need malloc
     cdef uint8_t *buf = <uint8_t *> PyMem_Malloc(frame_size)
     if buf == NULL:
+        PyMem_Free(dec)
         raise MemoryError
     cdef int16_t n_bytes
     while True:

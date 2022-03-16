@@ -54,7 +54,7 @@ def main():
 
     dis = get_dis()
     setup(
-        name="pysilk",
+        name="silk-python",
         version=version,
         url="https://github.com/synodriver/pysilk",
         packages=packages,
@@ -66,11 +66,11 @@ def main():
         author_email="diguohuangjiajinweijun@gmail.com",
         python_requires=">=3.6",
         install_requires=["cython"],
-        license='GPLv3',
+        license='BSD',
         classifiers=[
             "Development Status :: 4 - Beta",
             "Operating System :: OS Independent",
-            "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+            "License :: OSI Approved :: BSD License",
             "Topic :: Multimedia :: Sound/Audio",
             "Programming Language :: C",
             "Programming Language :: Cython",
@@ -85,7 +85,11 @@ def main():
         include_package_data=True,
         zip_safe=False,
         cmdclass={'build_ext': build_ext_compiler_check},
-        ext_modules=cythonize(extensions, compiler_directives={"cdivision": True, "embedsignature": True}),
+        ext_modules=cythonize(extensions,
+                              compiler_directives={"cdivision": True,
+                                                   "embedsignature": True,
+                                                   "boundscheck": False,
+                                                   "wraparound": False}),
     )
 
 

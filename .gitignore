@@ -4,7 +4,6 @@ silk-v3-decoder-master/
 */__pycache__/
 build/
 lib/
-/src/
 /_skbuild/
 .idea/
 *.pyd
