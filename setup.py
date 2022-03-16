@@ -1,25 +1,34 @@
 # -*- coding: utf-8 -*-
 import os
 import re
-import shutil
+import glob
+from collections import defaultdict
 
-from skbuild import setup
 from Cython.Build import cythonize
-from setuptools import Extension
+from setuptools import Extension, setup, find_packages
+from setuptools.command.build_ext import build_ext
+
+BUILD_ARGS = defaultdict(lambda: ['-O3', '-g0'])
+
+for compiler, args in [
+    ('msvc', ['/EHsc', '/DHUNSPELL_STATIC', "/Oi", "/O2", "/Ot"]),
+    ('gcc', ['-O3', '-g0'])]:
+    BUILD_ARGS[compiler] = args
+
+
+class build_ext_compiler_check(build_ext):
+    def build_extensions(self):
+        compiler = self.compiler.compiler_type
+        args = BUILD_ARGS[compiler]
+        for ext in self.extensions:
+            ext.extra_compile_args = args
+        super().build_extensions()
+
 
 extensions = [
-    # Extension("api", ["silk/lowlevelapi.pyx"],
-    #           include_dirs=["src"],
-    #           libraries=["silk"],
-    #           library_dirs=["./silk"],
-    #           # extra_link_args=["-silk/silk.dll"]
-    #           ),
-    # # Everything but primes.pyx is included here.
-    Extension("transcoder", ["silk/transcoder.pyx"],
-              include_dirs=["src"],
-              libraries=["silk"],
-              library_dirs=["./silk"],
-              # extra_link_args=["-silk/silk.dll"]
+    Extension("pysilk._silk", ["pysilk/_silk.pyx"] + glob.glob('./src/*.c'),
+              include_dirs=["./src"],
+              library_dirs=["./src"],
               ),
 ]
 
@@ -30,18 +39,14 @@ def get_dis():
 
 
 def get_version() -> str:
-    path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "silk", "__init__.py")
+    path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "pysilk", "__init__.py")
     with open(path, "r", encoding="utf-8") as f:
         data = f.read()
     result = re.findall(r"(?<=__version__ = \")\S+(?=\")", data)
     return result[0]
 
 
-# packages = find_packages(exclude=('test', 'tests.*', "test*"))
-def move_file(dst: str):
-    for file in os.listdir("."):
-        if os.path.splitext(file)[-1] in (".so", ".dll", ".lib", ".pyd"):
-            shutil.move(os.path.abspath(file), dst)
+packages = find_packages(exclude=('test', 'tests.*', "test*"))
 
 
 def main():
@@ -49,11 +54,11 @@ def main():
 
     dis = get_dis()
     setup(
-        name="silk",
+        name="pysilk",
         version=version,
-        url="https://github.com/synodriver/silk",
-        packages=["silk"],
-        keywords=["silk", "encode", "decode"],
+        url="https://github.com/synodriver/pysilk",
+        packages=packages,
+        keywords=["silk", "encode", "decode", "pcm", "audio"],
         description="silk encode and decode",
         long_description_content_type="text/markdown",
         long_description=dis,
@@ -74,13 +79,14 @@ def main():
             "Programming Language :: Python :: 3.7",
             "Programming Language :: Python :: 3.8",
             "Programming Language :: Python :: 3.9",
+            "Programming Language :: Python :: 3.10",
             "Programming Language :: Python :: Implementation :: CPython"
         ],
         include_package_data=True,
-        zip_safe=True,
-        ext_modules=cythonize(extensions),
+        zip_safe=False,
+        cmdclass={'build_ext': build_ext_compiler_check},
+        ext_modules=cythonize(extensions, compiler_directives={"cdivision": True, "embedsignature": True}),
     )
-    move_file(os.path.join(os.path.dirname(__file__), "silk"))
 
 
 if __name__ == "__main__":
