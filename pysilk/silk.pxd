@@ -1,5 +1,6 @@
 # cython: language_level=3
-from libc.stdint cimport uint8_t,int8_t, int16_t, int32_t
+# cython: cdivision=True
+from libc.stdint cimport uint8_t, int8_t, int16_t, int32_t
 
 cdef extern from "SKP_Silk_control.h" nogil:
     ctypedef struct SKP_SILK_SDK_EncControlStruct:
@@ -11,6 +12,13 @@ cdef extern from "SKP_Silk_control.h" nogil:
         int32_t complexity
         int32_t useInBandFEC
         int32_t useDTX
+    ctypedef struct SKP_SILK_SDK_DecControlStruct:
+        int32_t API_sampleRate
+        int32_t frameSize
+        int32_t framesPerPacket
+        int32_t moreInternalDecoderFrames
+        int32_t inBandFECOffset
+
 
 cdef extern  from "SKP_Silk_SDK_API.h" nogil:
     int32_t SKP_Silk_SDK_Get_Encoder_Size(int32_t *encSizeBytes)
@@ -21,7 +29,15 @@ cdef extern  from "SKP_Silk_SDK_API.h" nogil:
                                 int32_t nSamplesIn,
                                 uint8_t *outData,
                                 int16_t *nBytesOut)
-
+    int32_t SKP_Silk_SDK_Get_Decoder_Size(int32_t *decSizeBytes)
+    int32_t SKP_Silk_SDK_InitDecoder(void *decState)
+    int32_t SKP_Silk_SDK_Decode(void * decState,
+                                SKP_SILK_SDK_DecControlStruct *decControl,
+                                int32_t lostFlag,
+                                const uint8_t *inData,
+                                const int32_t nBytesIn,
+                                int16_t *samplesOut,
+                                int16_t *nSamplesOut)
 
 cdef extern  from * nogil:
     """
