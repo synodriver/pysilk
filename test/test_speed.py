@@ -20,6 +20,7 @@ def encode(times: int):
         pysilk.encode(BytesIO(test_pcm), BytesIO(), 24000, 24000)
     print(f"pysilk cost {time.time() - start}")
 
+
 def decode(times: int):
     with open("input.pcm", "rb") as f:
         test_pcm = f.read()
@@ -34,6 +35,7 @@ def decode(times: int):
     for i in range(times):
         pysilk.decode(BytesIO(test_silk), BytesIO(), 24000)
     print(f"pysilk cost {time.time() - start}")
+
 
 encode(10)
 

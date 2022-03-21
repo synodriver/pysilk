@@ -47,38 +47,38 @@ class SilkError(Exception):
             return str(self.code)
 
 
-cdef bytes i16_to_bytes(int16_t data):
+cdef inline bytes i16_to_bytes(int16_t data):
     cdef uint8_t * p = <uint8_t *> &data
     cdef uint8_t buf[2]
     buf[0] = p[0]
     buf[1] = p[1]
     return <bytes> buf[:2]
 
-cdef int16_t bytes_to_i16(bytes data):
+cdef inline int16_t bytes_to_i16(bytes data):
     cdef int16_t buf = 0
     cdef uint8_t *p = <uint8_t *> &buf
     p[0] = <uint8_t> data[0]
     p[1] = <uint8_t> data[1]
     return buf
 
-cdef void write_i16_le(object output, int16_t data, uint8_t le):
+cdef inline void write_i16_le(object output, int16_t data, uint8_t le):
     if not le:
         swap_i16(&data)
     output.write(i16_to_bytes(data))
 
-cdef int16_t read_i16_le(object input, uint8_t le):
+cdef inline int16_t read_i16_le(object input, uint8_t le):
     chunk = input.read(2)  # type: bytes
     cdef int16_t data = bytes_to_i16(chunk)
     if not le:
         swap_i16(&data)
     return data
 
-cdef uint8_t PyFile_Check(object file):
+cdef inline uint8_t PyFile_Check(object file):
     if PyObject_HasAttrString(file, "read") and PyObject_HasAttrString(file, "write"):  # should we check seek method?
         return 1
     return 0
 
-cpdef void encode(object input,
+cpdef inline void encode(object input,
                   object output,
                   int32_t sample_rate,
                   int32_t bit_rate,
@@ -170,7 +170,7 @@ cpdef void encode(object input,
         output.write(<bytes> payload[0:n_bytes])
     PyMem_Free(enc)
 
-cpdef void decode(object input,
+cpdef inline void decode(object input,
                   object output,
                   int32_t sample_rate,
                   int32_t frame_size=0,

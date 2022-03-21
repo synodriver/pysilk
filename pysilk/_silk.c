@@ -1000,7 +1000,7 @@ struct __pyx_opt_args_6pysilk_5_silk_decode;
 /* "pysilk/_silk.pyx":81
  *     return 0
  * 
- * cpdef void encode(object input,             # <<<<<<<<<<<<<<
+ * cpdef inline void encode(object input,             # <<<<<<<<<<<<<<
  *                   object output,
  *                   int32_t sample_rate,
  */
@@ -1017,7 +1017,7 @@ struct __pyx_opt_args_6pysilk_5_silk_encode {
 /* "pysilk/_silk.pyx":173
  *     PyMem_Free(enc)
  * 
- * cpdef void decode(object input,             # <<<<<<<<<<<<<<
+ * cpdef inline void decode(object input,             # <<<<<<<<<<<<<<
  *                   object output,
  *                   int32_t sample_rate,
  */
@@ -1505,12 +1505,12 @@ static PyTypeObject *__pyx_ptype_7cpython_4type_type = 0;
 /* Module declarations from 'pysilk.silk' */
 
 /* Module declarations from 'pysilk._silk' */
-static PyObject *__pyx_f_6pysilk_5_silk_i16_to_bytes(int16_t); /*proto*/
-static int16_t __pyx_f_6pysilk_5_silk_bytes_to_i16(PyObject *); /*proto*/
-static void __pyx_f_6pysilk_5_silk_write_i16_le(PyObject *, int16_t, uint8_t); /*proto*/
-static uint8_t __pyx_f_6pysilk_5_silk_PyFile_Check(PyObject *); /*proto*/
-static void __pyx_f_6pysilk_5_silk_encode(PyObject *, PyObject *, int32_t, int32_t, int __pyx_skip_dispatch, struct __pyx_opt_args_6pysilk_5_silk_encode *__pyx_optional_args); /*proto*/
-static void __pyx_f_6pysilk_5_silk_decode(PyObject *, PyObject *, int32_t, int __pyx_skip_dispatch, struct __pyx_opt_args_6pysilk_5_silk_decode *__pyx_optional_args); /*proto*/
+static CYTHON_INLINE PyObject *__pyx_f_6pysilk_5_silk_i16_to_bytes(int16_t); /*proto*/
+static CYTHON_INLINE int16_t __pyx_f_6pysilk_5_silk_bytes_to_i16(PyObject *); /*proto*/
+static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_write_i16_le(PyObject *, int16_t, uint8_t); /*proto*/
+static CYTHON_INLINE uint8_t __pyx_f_6pysilk_5_silk_PyFile_Check(PyObject *); /*proto*/
+static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *, PyObject *, int32_t, int32_t, int __pyx_skip_dispatch, struct __pyx_opt_args_6pysilk_5_silk_encode *__pyx_optional_args); /*proto*/
+static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *, PyObject *, int32_t, int __pyx_skip_dispatch, struct __pyx_opt_args_6pysilk_5_silk_decode *__pyx_optional_args); /*proto*/
 #define __Pyx_MODULE_NAME "pysilk._silk"
 extern int __pyx_module_is_main_pysilk___silk;
 int __pyx_module_is_main_pysilk___silk = 0;
@@ -2328,12 +2328,12 @@ static PyObject *__pyx_pf_6pysilk_5_silk_9SilkError_2__str__(CYTHON_UNUSED PyObj
 /* "pysilk/_silk.pyx":50
  * 
  * 
- * cdef bytes i16_to_bytes(int16_t data):             # <<<<<<<<<<<<<<
+ * cdef inline bytes i16_to_bytes(int16_t data):             # <<<<<<<<<<<<<<
  *     cdef uint8_t * p = <uint8_t *> &data
  *     cdef uint8_t buf[2]
  */
 
-static PyObject *__pyx_f_6pysilk_5_silk_i16_to_bytes(int16_t __pyx_v_data) {
+static CYTHON_INLINE PyObject *__pyx_f_6pysilk_5_silk_i16_to_bytes(int16_t __pyx_v_data) {
   uint8_t *__pyx_v_p;
   uint8_t __pyx_v_buf[2];
   PyObject *__pyx_r = NULL;
@@ -2346,7 +2346,7 @@ static PyObject *__pyx_f_6pysilk_5_silk_i16_to_bytes(int16_t __pyx_v_data) {
 
   /* "pysilk/_silk.pyx":51
  * 
- * cdef bytes i16_to_bytes(int16_t data):
+ * cdef inline bytes i16_to_bytes(int16_t data):
  *     cdef uint8_t * p = <uint8_t *> &data             # <<<<<<<<<<<<<<
  *     cdef uint8_t buf[2]
  *     buf[0] = p[0]
@@ -2376,7 +2376,7 @@ static PyObject *__pyx_f_6pysilk_5_silk_i16_to_bytes(int16_t __pyx_v_data) {
  *     buf[1] = p[1]
  *     return <bytes> buf[:2]             # <<<<<<<<<<<<<<
  * 
- * cdef int16_t bytes_to_i16(bytes data):
+ * cdef inline int16_t bytes_to_i16(bytes data):
  */
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_1 = __Pyx_PyBytes_FromStringAndSize(((const char*)__pyx_v_buf) + 0, 2 - 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 55, __pyx_L1_error)
@@ -2389,7 +2389,7 @@ static PyObject *__pyx_f_6pysilk_5_silk_i16_to_bytes(int16_t __pyx_v_data) {
   /* "pysilk/_silk.pyx":50
  * 
  * 
- * cdef bytes i16_to_bytes(int16_t data):             # <<<<<<<<<<<<<<
+ * cdef inline bytes i16_to_bytes(int16_t data):             # <<<<<<<<<<<<<<
  *     cdef uint8_t * p = <uint8_t *> &data
  *     cdef uint8_t buf[2]
  */
@@ -2408,12 +2408,12 @@ static PyObject *__pyx_f_6pysilk_5_silk_i16_to_bytes(int16_t __pyx_v_data) {
 /* "pysilk/_silk.pyx":57
  *     return <bytes> buf[:2]
  * 
- * cdef int16_t bytes_to_i16(bytes data):             # <<<<<<<<<<<<<<
+ * cdef inline int16_t bytes_to_i16(bytes data):             # <<<<<<<<<<<<<<
  *     cdef int16_t buf = 0
  *     cdef uint8_t *p = <uint8_t *> &buf
  */
 
-static int16_t __pyx_f_6pysilk_5_silk_bytes_to_i16(PyObject *__pyx_v_data) {
+static CYTHON_INLINE int16_t __pyx_f_6pysilk_5_silk_bytes_to_i16(PyObject *__pyx_v_data) {
   int16_t __pyx_v_buf;
   uint8_t *__pyx_v_p;
   int16_t __pyx_r;
@@ -2427,7 +2427,7 @@ static int16_t __pyx_f_6pysilk_5_silk_bytes_to_i16(PyObject *__pyx_v_data) {
 
   /* "pysilk/_silk.pyx":58
  * 
- * cdef int16_t bytes_to_i16(bytes data):
+ * cdef inline int16_t bytes_to_i16(bytes data):
  *     cdef int16_t buf = 0             # <<<<<<<<<<<<<<
  *     cdef uint8_t *p = <uint8_t *> &buf
  *     p[0] = <uint8_t> data[0]
@@ -2435,7 +2435,7 @@ static int16_t __pyx_f_6pysilk_5_silk_bytes_to_i16(PyObject *__pyx_v_data) {
   __pyx_v_buf = 0;
 
   /* "pysilk/_silk.pyx":59
- * cdef int16_t bytes_to_i16(bytes data):
+ * cdef inline int16_t bytes_to_i16(bytes data):
  *     cdef int16_t buf = 0
  *     cdef uint8_t *p = <uint8_t *> &buf             # <<<<<<<<<<<<<<
  *     p[0] = <uint8_t> data[0]
@@ -2474,7 +2474,7 @@ static int16_t __pyx_f_6pysilk_5_silk_bytes_to_i16(PyObject *__pyx_v_data) {
  *     p[1] = <uint8_t> data[1]
  *     return buf             # <<<<<<<<<<<<<<
  * 
- * cdef void write_i16_le(object output, int16_t data, uint8_t le):
+ * cdef inline void write_i16_le(object output, int16_t data, uint8_t le):
  */
   __pyx_r = __pyx_v_buf;
   goto __pyx_L0;
@@ -2482,7 +2482,7 @@ static int16_t __pyx_f_6pysilk_5_silk_bytes_to_i16(PyObject *__pyx_v_data) {
   /* "pysilk/_silk.pyx":57
  *     return <bytes> buf[:2]
  * 
- * cdef int16_t bytes_to_i16(bytes data):             # <<<<<<<<<<<<<<
+ * cdef inline int16_t bytes_to_i16(bytes data):             # <<<<<<<<<<<<<<
  *     cdef int16_t buf = 0
  *     cdef uint8_t *p = <uint8_t *> &buf
  */
@@ -2500,12 +2500,12 @@ static int16_t __pyx_f_6pysilk_5_silk_bytes_to_i16(PyObject *__pyx_v_data) {
 /* "pysilk/_silk.pyx":64
  *     return buf
  * 
- * cdef void write_i16_le(object output, int16_t data, uint8_t le):             # <<<<<<<<<<<<<<
+ * cdef inline void write_i16_le(object output, int16_t data, uint8_t le):             # <<<<<<<<<<<<<<
  *     if not le:
  *         swap_i16(&data)
  */
 
-static void __pyx_f_6pysilk_5_silk_write_i16_le(PyObject *__pyx_v_output, int16_t __pyx_v_data, uint8_t __pyx_v_le) {
+static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_write_i16_le(PyObject *__pyx_v_output, int16_t __pyx_v_data, uint8_t __pyx_v_le) {
   __Pyx_RefNannyDeclarations
   int __pyx_t_1;
   PyObject *__pyx_t_2 = NULL;
@@ -2519,7 +2519,7 @@ static void __pyx_f_6pysilk_5_silk_write_i16_le(PyObject *__pyx_v_output, int16_
 
   /* "pysilk/_silk.pyx":65
  * 
- * cdef void write_i16_le(object output, int16_t data, uint8_t le):
+ * cdef inline void write_i16_le(object output, int16_t data, uint8_t le):
  *     if not le:             # <<<<<<<<<<<<<<
  *         swap_i16(&data)
  *     output.write(i16_to_bytes(data))
@@ -2528,7 +2528,7 @@ static void __pyx_f_6pysilk_5_silk_write_i16_le(PyObject *__pyx_v_output, int16_
   if (__pyx_t_1) {
 
     /* "pysilk/_silk.pyx":66
- * cdef void write_i16_le(object output, int16_t data, uint8_t le):
+ * cdef inline void write_i16_le(object output, int16_t data, uint8_t le):
  *     if not le:
  *         swap_i16(&data)             # <<<<<<<<<<<<<<
  *     output.write(i16_to_bytes(data))
@@ -2538,7 +2538,7 @@ static void __pyx_f_6pysilk_5_silk_write_i16_le(PyObject *__pyx_v_output, int16_
 
     /* "pysilk/_silk.pyx":65
  * 
- * cdef void write_i16_le(object output, int16_t data, uint8_t le):
+ * cdef inline void write_i16_le(object output, int16_t data, uint8_t le):
  *     if not le:             # <<<<<<<<<<<<<<
  *         swap_i16(&data)
  *     output.write(i16_to_bytes(data))
@@ -2550,7 +2550,7 @@ static void __pyx_f_6pysilk_5_silk_write_i16_le(PyObject *__pyx_v_output, int16_
  *         swap_i16(&data)
  *     output.write(i16_to_bytes(data))             # <<<<<<<<<<<<<<
  * 
- * cdef int16_t read_i16_le(object input, uint8_t le):
+ * cdef inline int16_t read_i16_le(object input, uint8_t le):
  */
   __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_output, __pyx_n_s_write); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 67, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
@@ -2577,7 +2577,7 @@ static void __pyx_f_6pysilk_5_silk_write_i16_le(PyObject *__pyx_v_output, int16_
   /* "pysilk/_silk.pyx":64
  *     return buf
  * 
- * cdef void write_i16_le(object output, int16_t data, uint8_t le):             # <<<<<<<<<<<<<<
+ * cdef inline void write_i16_le(object output, int16_t data, uint8_t le):             # <<<<<<<<<<<<<<
  *     if not le:
  *         swap_i16(&data)
  */
@@ -2597,12 +2597,12 @@ static void __pyx_f_6pysilk_5_silk_write_i16_le(PyObject *__pyx_v_output, int16_
 /* "pysilk/_silk.pyx":69
  *     output.write(i16_to_bytes(data))
  * 
- * cdef int16_t read_i16_le(object input, uint8_t le):             # <<<<<<<<<<<<<<
+ * cdef inline int16_t read_i16_le(object input, uint8_t le):             # <<<<<<<<<<<<<<
  *     chunk = input.read(2)  # type: bytes
  *     cdef int16_t data = bytes_to_i16(chunk)
  */
 
-static int16_t __pyx_f_6pysilk_5_silk_read_i16_le(PyObject *__pyx_v_input, uint8_t __pyx_v_le) {
+static CYTHON_INLINE int16_t __pyx_f_6pysilk_5_silk_read_i16_le(PyObject *__pyx_v_input, uint8_t __pyx_v_le) {
   PyObject *__pyx_v_chunk = NULL;
   int16_t __pyx_v_data;
   int16_t __pyx_r;
@@ -2618,7 +2618,7 @@ static int16_t __pyx_f_6pysilk_5_silk_read_i16_le(PyObject *__pyx_v_input, uint8
 
   /* "pysilk/_silk.pyx":70
  * 
- * cdef int16_t read_i16_le(object input, uint8_t le):
+ * cdef inline int16_t read_i16_le(object input, uint8_t le):
  *     chunk = input.read(2)  # type: bytes             # <<<<<<<<<<<<<<
  *     cdef int16_t data = bytes_to_i16(chunk)
  *     if not le:
@@ -2644,7 +2644,7 @@ static int16_t __pyx_f_6pysilk_5_silk_read_i16_le(PyObject *__pyx_v_input, uint8
   __pyx_t_1 = 0;
 
   /* "pysilk/_silk.pyx":71
- * cdef int16_t read_i16_le(object input, uint8_t le):
+ * cdef inline int16_t read_i16_le(object input, uint8_t le):
  *     chunk = input.read(2)  # type: bytes
  *     cdef int16_t data = bytes_to_i16(chunk)             # <<<<<<<<<<<<<<
  *     if not le:
@@ -2686,7 +2686,7 @@ static int16_t __pyx_f_6pysilk_5_silk_read_i16_le(PyObject *__pyx_v_input, uint8
  *         swap_i16(&data)
  *     return data             # <<<<<<<<<<<<<<
  * 
- * cdef uint8_t PyFile_Check(object file):
+ * cdef inline uint8_t PyFile_Check(object file):
  */
   __pyx_r = __pyx_v_data;
   goto __pyx_L0;
@@ -2694,7 +2694,7 @@ static int16_t __pyx_f_6pysilk_5_silk_read_i16_le(PyObject *__pyx_v_input, uint8
   /* "pysilk/_silk.pyx":69
  *     output.write(i16_to_bytes(data))
  * 
- * cdef int16_t read_i16_le(object input, uint8_t le):             # <<<<<<<<<<<<<<
+ * cdef inline int16_t read_i16_le(object input, uint8_t le):             # <<<<<<<<<<<<<<
  *     chunk = input.read(2)  # type: bytes
  *     cdef int16_t data = bytes_to_i16(chunk)
  */
@@ -2715,12 +2715,12 @@ static int16_t __pyx_f_6pysilk_5_silk_read_i16_le(PyObject *__pyx_v_input, uint8
 /* "pysilk/_silk.pyx":76
  *     return data
  * 
- * cdef uint8_t PyFile_Check(object file):             # <<<<<<<<<<<<<<
+ * cdef inline uint8_t PyFile_Check(object file):             # <<<<<<<<<<<<<<
  *     if PyObject_HasAttrString(file, "read") and PyObject_HasAttrString(file, "write"):  # should we check seek method?
  *         return 1
  */
 
-static uint8_t __pyx_f_6pysilk_5_silk_PyFile_Check(PyObject *__pyx_v_file) {
+static CYTHON_INLINE uint8_t __pyx_f_6pysilk_5_silk_PyFile_Check(PyObject *__pyx_v_file) {
   uint8_t __pyx_r;
   __Pyx_RefNannyDeclarations
   int __pyx_t_1;
@@ -2729,7 +2729,7 @@ static uint8_t __pyx_f_6pysilk_5_silk_PyFile_Check(PyObject *__pyx_v_file) {
 
   /* "pysilk/_silk.pyx":77
  * 
- * cdef uint8_t PyFile_Check(object file):
+ * cdef inline uint8_t PyFile_Check(object file):
  *     if PyObject_HasAttrString(file, "read") and PyObject_HasAttrString(file, "write"):  # should we check seek method?             # <<<<<<<<<<<<<<
  *         return 1
  *     return 0
@@ -2746,7 +2746,7 @@ static uint8_t __pyx_f_6pysilk_5_silk_PyFile_Check(PyObject *__pyx_v_file) {
   if (__pyx_t_1) {
 
     /* "pysilk/_silk.pyx":78
- * cdef uint8_t PyFile_Check(object file):
+ * cdef inline uint8_t PyFile_Check(object file):
  *     if PyObject_HasAttrString(file, "read") and PyObject_HasAttrString(file, "write"):  # should we check seek method?
  *         return 1             # <<<<<<<<<<<<<<
  *     return 0
@@ -2757,7 +2757,7 @@ static uint8_t __pyx_f_6pysilk_5_silk_PyFile_Check(PyObject *__pyx_v_file) {
 
     /* "pysilk/_silk.pyx":77
  * 
- * cdef uint8_t PyFile_Check(object file):
+ * cdef inline uint8_t PyFile_Check(object file):
  *     if PyObject_HasAttrString(file, "read") and PyObject_HasAttrString(file, "write"):  # should we check seek method?             # <<<<<<<<<<<<<<
  *         return 1
  *     return 0
@@ -2769,7 +2769,7 @@ static uint8_t __pyx_f_6pysilk_5_silk_PyFile_Check(PyObject *__pyx_v_file) {
  *         return 1
  *     return 0             # <<<<<<<<<<<<<<
  * 
- * cpdef void encode(object input,
+ * cpdef inline void encode(object input,
  */
   __pyx_r = 0;
   goto __pyx_L0;
@@ -2777,7 +2777,7 @@ static uint8_t __pyx_f_6pysilk_5_silk_PyFile_Check(PyObject *__pyx_v_file) {
   /* "pysilk/_silk.pyx":76
  *     return data
  * 
- * cdef uint8_t PyFile_Check(object file):             # <<<<<<<<<<<<<<
+ * cdef inline uint8_t PyFile_Check(object file):             # <<<<<<<<<<<<<<
  *     if PyObject_HasAttrString(file, "read") and PyObject_HasAttrString(file, "write"):  # should we check seek method?
  *         return 1
  */
@@ -2791,13 +2791,13 @@ static uint8_t __pyx_f_6pysilk_5_silk_PyFile_Check(PyObject *__pyx_v_file) {
 /* "pysilk/_silk.pyx":81
  *     return 0
  * 
- * cpdef void encode(object input,             # <<<<<<<<<<<<<<
+ * cpdef inline void encode(object input,             # <<<<<<<<<<<<<<
  *                   object output,
  *                   int32_t sample_rate,
  */
 
 static PyObject *__pyx_pw_6pysilk_5_silk_1encode(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input, PyObject *__pyx_v_output, int32_t __pyx_v_sample_rate, int32_t __pyx_v_bit_rate, CYTHON_UNUSED int __pyx_skip_dispatch, struct __pyx_opt_args_6pysilk_5_silk_encode *__pyx_optional_args) {
+static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input, PyObject *__pyx_v_output, int32_t __pyx_v_sample_rate, int32_t __pyx_v_bit_rate, CYTHON_UNUSED int __pyx_skip_dispatch, struct __pyx_opt_args_6pysilk_5_silk_encode *__pyx_optional_args) {
   int32_t __pyx_v_max_internal_sample_rate = ((int32_t)0x5DC0);
   int32_t __pyx_v_packet_loss_percentage = ((int32_t)0);
   int32_t __pyx_v_complexity = ((int32_t)2);
@@ -3629,14 +3629,14 @@ static void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input, PyObject *__p
  *         output.write(<bytes> payload[0:n_bytes])
  *     PyMem_Free(enc)             # <<<<<<<<<<<<<<
  * 
- * cpdef void decode(object input,
+ * cpdef inline void decode(object input,
  */
   PyMem_Free(__pyx_v_enc);
 
   /* "pysilk/_silk.pyx":81
  *     return 0
  * 
- * cpdef void encode(object input,             # <<<<<<<<<<<<<<
+ * cpdef inline void encode(object input,             # <<<<<<<<<<<<<<
  *                   object output,
  *                   int32_t sample_rate,
  */
@@ -3866,7 +3866,7 @@ static PyObject *__pyx_pw_6pysilk_5_silk_1encode(PyObject *__pyx_self, PyObject 
   /* "pysilk/_silk.pyx":81
  *     return 0
  * 
- * cpdef void encode(object input,             # <<<<<<<<<<<<<<
+ * cpdef inline void encode(object input,             # <<<<<<<<<<<<<<
  *                   object output,
  *                   int32_t sample_rate,
  */
@@ -3914,13 +3914,13 @@ static PyObject *__pyx_pf_6pysilk_5_silk_encode(CYTHON_UNUSED PyObject *__pyx_se
 /* "pysilk/_silk.pyx":173
  *     PyMem_Free(enc)
  * 
- * cpdef void decode(object input,             # <<<<<<<<<<<<<<
+ * cpdef inline void decode(object input,             # <<<<<<<<<<<<<<
  *                   object output,
  *                   int32_t sample_rate,
  */
 
 static PyObject *__pyx_pw_6pysilk_5_silk_3decode(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input, PyObject *__pyx_v_output, int32_t __pyx_v_sample_rate, CYTHON_UNUSED int __pyx_skip_dispatch, struct __pyx_opt_args_6pysilk_5_silk_decode *__pyx_optional_args) {
+static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input, PyObject *__pyx_v_output, int32_t __pyx_v_sample_rate, CYTHON_UNUSED int __pyx_skip_dispatch, struct __pyx_opt_args_6pysilk_5_silk_decode *__pyx_optional_args) {
   int32_t __pyx_v_frame_size = ((int32_t)0);
   int32_t __pyx_v_frames_per_packet = ((int32_t)1);
 
@@ -4959,7 +4959,7 @@ static void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input, PyObject *__p
   /* "pysilk/_silk.pyx":173
  *     PyMem_Free(enc)
  * 
- * cpdef void decode(object input,             # <<<<<<<<<<<<<<
+ * cpdef inline void decode(object input,             # <<<<<<<<<<<<<<
  *                   object output,
  *                   int32_t sample_rate,
  */
@@ -5154,7 +5154,7 @@ static PyObject *__pyx_pw_6pysilk_5_silk_3decode(PyObject *__pyx_self, PyObject 
   /* "pysilk/_silk.pyx":173
  *     PyMem_Free(enc)
  * 
- * cpdef void decode(object input,             # <<<<<<<<<<<<<<
+ * cpdef inline void decode(object input,             # <<<<<<<<<<<<<<
  *                   object output,
  *                   int32_t sample_rate,
  */
