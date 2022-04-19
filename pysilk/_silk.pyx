@@ -2,7 +2,7 @@
 # cython: cdivision=True
 from libc.stdint cimport uint8_t, int16_t, int32_t
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
-from cpython.bytes cimport PyBytes_Check, PyBytes_AsString, PyBytes_Size
+from cpython.bytes cimport PyBytes_Check, PyBytes_AS_STRING, PyBytes_Size
 from cpython.object cimport PyObject_HasAttrString
 
 from pysilk.silk cimport is_le, swap_i16
@@ -158,7 +158,7 @@ cpdef inline void encode(object input,
             break
         code = SKP_Silk_SDK_Encode(enc,
                                    &enc_control,
-                                   <int16_t *> PyBytes_AsString(chunk),
+                                   <int16_t *> PyBytes_AS_STRING(chunk),
                                    <int32_t> (PyBytes_Size(chunk) / 2),
                                    payload,
                                    &n_bytes)
@@ -250,7 +250,7 @@ cpdef inline void decode(object input,
         code = SKP_Silk_SDK_Decode(dec,
                                    &dec_control,
                                    loss,
-                                   <const uint8_t *> PyBytes_AsString(chunk),
+                                   <const uint8_t *> PyBytes_AS_STRING(chunk),
                                    <const int32_t> n_bytes,
                                    <int16_t *> buf,
                                    &n_bytes)

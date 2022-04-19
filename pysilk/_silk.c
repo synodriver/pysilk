@@ -2845,7 +2845,6 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
   PyObject *__pyx_t_4 = NULL;
   PyObject *__pyx_t_5 = NULL;
   Py_ssize_t __pyx_t_6;
-  char *__pyx_t_7;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -3498,18 +3497,9 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
     }
 
-    /* "pysilk/_silk.pyx":161
- *         code = SKP_Silk_SDK_Encode(enc,
- *                                    &enc_control,
- *                                    <int16_t *> PyBytes_AsString(chunk),             # <<<<<<<<<<<<<<
- *                                    <int32_t> (PyBytes_Size(chunk) / 2),
- *                                    payload,
- */
-    __pyx_t_7 = PyBytes_AsString(__pyx_v_chunk); if (unlikely(__pyx_t_7 == ((char *)NULL))) __PYX_ERR(0, 161, __pyx_L1_error)
-
     /* "pysilk/_silk.pyx":162
  *                                    &enc_control,
- *                                    <int16_t *> PyBytes_AsString(chunk),
+ *                                    <int16_t *> PyBytes_AS_STRING(chunk),
  *                                    <int32_t> (PyBytes_Size(chunk) / 2),             # <<<<<<<<<<<<<<
  *                                    payload,
  *                                    &n_bytes)
@@ -3521,9 +3511,9 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  *             break
  *         code = SKP_Silk_SDK_Encode(enc,             # <<<<<<<<<<<<<<
  *                                    &enc_control,
- *                                    <int16_t *> PyBytes_AsString(chunk),
+ *                                    <int16_t *> PyBytes_AS_STRING(chunk),
  */
-    __pyx_v_code = SKP_Silk_SDK_Encode(__pyx_v_enc, (&__pyx_v_enc_control), ((int16_t *)__pyx_t_7), ((int32_t)(__pyx_t_6 / 2)), __pyx_v_payload, (&__pyx_v_n_bytes));
+    __pyx_v_code = SKP_Silk_SDK_Encode(__pyx_v_enc, (&__pyx_v_enc_control), ((int16_t *)PyBytes_AS_STRING(__pyx_v_chunk)), ((int32_t)(__pyx_t_6 / 2)), __pyx_v_payload, (&__pyx_v_n_bytes));
 
     /* "pysilk/_silk.pyx":165
  *                                    payload,
@@ -3958,7 +3948,6 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
   int __pyx_t_5;
   PyObject *__pyx_t_6 = NULL;
   Py_ssize_t __pyx_t_7;
-  char *__pyx_t_8;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -4824,15 +4813,6 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
     }
 
-    /* "pysilk/_silk.pyx":253
- *                                    &dec_control,
- *                                    loss,
- *                                    <const uint8_t *> PyBytes_AsString(chunk),             # <<<<<<<<<<<<<<
- *                                    <const int32_t> n_bytes,
- *                                    <int16_t *> buf,
- */
-    __pyx_t_8 = PyBytes_AsString(__pyx_v_chunk); if (unlikely(__pyx_t_8 == ((char *)NULL))) __PYX_ERR(0, 253, __pyx_L1_error)
-
     /* "pysilk/_silk.pyx":250
  *             PyMem_Free(dec)
  *             raise SilkError("INVALID")
@@ -4840,7 +4820,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  *                                    &dec_control,
  *                                    loss,
  */
-    __pyx_v_code = SKP_Silk_SDK_Decode(__pyx_v_dec, (&__pyx_v_dec_control), __pyx_v_loss, ((uint8_t const *)__pyx_t_8), ((int32_t const )__pyx_v_n_bytes), ((int16_t *)__pyx_v_buf), (&__pyx_v_n_bytes));
+    __pyx_v_code = SKP_Silk_SDK_Decode(__pyx_v_dec, (&__pyx_v_dec_control), __pyx_v_loss, ((uint8_t const *)PyBytes_AS_STRING(__pyx_v_chunk)), ((int32_t const )__pyx_v_n_bytes), ((int16_t *)__pyx_v_buf), (&__pyx_v_n_bytes));
 
     /* "pysilk/_silk.pyx":257
  *                                    <int16_t *> buf,
