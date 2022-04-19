@@ -41,28 +41,40 @@ cdef extern  from "SKP_Silk_SDK_API.h" nogil:
 
 cdef extern  from * nogil:
     """
-    void swap_i16(int16_t *data)
+/*
+void swap_i16(int16_t *data)
+{
+    int8_t *p = (int8_t *)data;
+    int8_t tmp = p[0];
+    p[0] = p[1];
+    p[1] = tmp;
+}
+*/
+uint8_t is_le()
+{
+    int16_t data = 0x1234;
+    int8_t *p = (int8_t *)&data;
+    if (p[0]<p[1])
     {
-        int8_t *p = (int8_t *)data;
-        int8_t tmp = p[0];
-        p[0] = p[1];
-        p[1] = tmp;
+        return 0;
+    }
+    else
+    {
+        return 1;
     }
 
-    uint8_t is_le()
-    {
-        int16_t data = 0x1234;
-        int8_t *p = (int8_t *)&data;
-        if (p[0]<p[1])
-        {
-            return 0;
-        }
-        else
-        {
-            return 1;
-        }
-
-    }
+}
+#ifdef _WIN32
+    #define swap_i16 _byteswap_ushort
+#else
+    #define swap_i16 __builtin_bswap16
+#endif /* _WIN32 */
+#ifdef WORDS_BIGENDIAN
+    #define SHOULD_SWAP 1
+#else
+    #define SHOULD_SWAP 0
+#endif
     """
-    void swap_i16(int16_t *data)
+    int16_t swap_i16(int16_t data)
     uint8_t is_le()
+    int SHOULD_SWAP

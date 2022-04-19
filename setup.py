@@ -2,6 +2,7 @@
 import os
 import re
 import glob
+import sys
 from collections import defaultdict
 
 from Cython.Build import cythonize
@@ -25,10 +26,14 @@ class build_ext_compiler_check(build_ext):
         super().build_extensions()
 
 
+macro_base = []
+if sys.byteorder != "little":
+    macro_base.append(("WORDS_BIGENDIAN", None))
 extensions = [
     Extension("pysilk._silk", ["pysilk/_silk.pyx"] + glob.glob('./src/*.c'),
               include_dirs=["./src"],
               library_dirs=["./src"],
+              define_macros=macro_base
               ),
 ]
 

@@ -2,10 +2,10 @@
 # cython: cdivision=True
 from libc.stdint cimport uint8_t, int16_t, int32_t
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
-from cpython.bytes cimport PyBytes_Check, PyBytes_AS_STRING, PyBytes_Size
-from cpython.object cimport PyObject_HasAttrString
+from cpython.bytes cimport PyBytes_Check, PyBytes_AS_STRING, PyBytes_Size, PyBytes_FromStringAndSize
+from cpython.object cimport PyObject_HasAttrString, PyObject
 
-from pysilk.silk cimport is_le, swap_i16
+from pysilk.silk cimport swap_i16, SHOULD_SWAP
 from pysilk.silk cimport SKP_SILK_SDK_EncControlStruct, SKP_Silk_SDK_Get_Encoder_Size
 from pysilk.silk cimport SKP_Silk_SDK_InitEncoder, SKP_Silk_SDK_Encode
 from pysilk.silk cimport SKP_SILK_SDK_DecControlStruct, SKP_Silk_SDK_Get_Decoder_Size, SKP_Silk_SDK_InitDecoder, SKP_Silk_SDK_Decode
@@ -48,11 +48,15 @@ class SilkError(Exception):
 
 
 cdef inline bytes i16_to_bytes(int16_t data):
-    cdef uint8_t * p = <uint8_t *> &data
-    cdef uint8_t buf[2]
+    cdef:
+        uint8_t * p = <uint8_t *> &data
+        bytes bt = PyBytes_FromStringAndSize(NULL, 2)
+    if <PyObject*>bt == NULL:
+        raise MemoryError
+    cdef uint8_t* buf = <uint8_t*>PyBytes_AS_STRING(bt)
     buf[0] = p[0]
     buf[1] = p[1]
-    return <bytes> buf[:2]
+    return bt
 
 cdef inline int16_t bytes_to_i16(bytes data):
     cdef int16_t buf = 0
@@ -61,16 +65,16 @@ cdef inline int16_t bytes_to_i16(bytes data):
     p[1] = <uint8_t> data[1]
     return buf
 
-cdef inline void write_i16_le(object output, int16_t data, uint8_t le):
-    if not le:
-        swap_i16(&data)
+cdef inline void write_i16_le(object output, int16_t data):
+    if SHOULD_SWAP:
+        data = swap_i16(data)
     output.write(i16_to_bytes(data))
 
-cdef inline int16_t read_i16_le(object input, uint8_t le):
+cdef inline int16_t read_i16_le(object input):
     chunk = input.read(2)  # type: bytes
     cdef int16_t data = bytes_to_i16(chunk)
-    if not le:
-        swap_i16(&data)
+    if SHOULD_SWAP:
+        data = swap_i16(data)
     return data
 
 cdef inline uint8_t PyFile_Check(object file):
@@ -127,7 +131,6 @@ cpdef inline void encode(object input,
     enc_status.complexity = 0
     enc_status.useInBandFEC = 0
     enc_status.useDTX = 0
-    cdef uint8_t le = is_le()  # is little endian
 
     cdef int32_t enc_size_bytes = 0
     cdef int32_t code = SKP_Silk_SDK_Get_Encoder_Size(&enc_size_bytes)
@@ -166,7 +169,7 @@ cpdef inline void encode(object input,
             PyMem_Free(enc)
             raise SilkError(code)
 
-        write_i16_le(output, n_bytes, le)
+        write_i16_le(output, n_bytes)
         output.write(<bytes> payload[0:n_bytes])
     PyMem_Free(enc)
 
@@ -212,7 +215,6 @@ cpdef inline void decode(object input,
     dec_control.framesPerPacket = frames_per_packet
     dec_control.moreInternalDecoderFrames = more_internal_decoder_frames
     dec_control.inBandFECOffset = in_band_fec_offset
-    cdef uint8_t le = is_le()  # is little endian
     cdef int32_t dec_size = 0
     cdef int32_t code = SKP_Silk_SDK_Get_Decoder_Size(&dec_size)
     if code != 0:
@@ -236,8 +238,8 @@ cpdef inline void decode(object input,
         if PyBytes_Size(chunk) < 2:
             break
         n_bytes = bytes_to_i16(chunk)
-        if not le:
-            swap_i16(&n_bytes)
+        if SHOULD_SWAP:
+            n_bytes = swap_i16(n_bytes)
         if n_bytes > <int16_t> frame_size:
             PyMem_Free(buf)
             PyMem_Free(dec)

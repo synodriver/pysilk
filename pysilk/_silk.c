@@ -746,28 +746,39 @@ static CYTHON_INLINE float __PYX_NAN() {
 #include "SKP_Silk_control.h"
 #include "SKP_Silk_SDK_API.h"
 
-    void swap_i16(int16_t *data)
+/*
+void swap_i16(int16_t *data)
+{
+    int8_t *p = (int8_t *)data;
+    int8_t tmp = p[0];
+    p[0] = p[1];
+    p[1] = tmp;
+}
+*/
+uint8_t is_le()
+{
+    int16_t data = 0x1234;
+    int8_t *p = (int8_t *)&data;
+    if (p[0]<p[1])
     {
-        int8_t *p = (int8_t *)data;
-        int8_t tmp = p[0];
-        p[0] = p[1];
-        p[1] = tmp;
+        return 0;
+    }
+    else
+    {
+        return 1;
     }
 
-    uint8_t is_le()
-    {
-        int16_t data = 0x1234;
-        int8_t *p = (int8_t *)&data;
-        if (p[0]<p[1])
-        {
-            return 0;
-        }
-        else
-        {
-            return 1;
-        }
-
-    }
+}
+#ifdef _WIN32
+    #define swap_i16 _byteswap_ushort
+#else
+    #define swap_i16 __builtin_bswap16
+#endif /* _WIN32 */
+#ifdef WORDS_BIGENDIAN
+    #define SHOULD_SWAP 1
+#else
+    #define SHOULD_SWAP 0
+#endif
     
 #ifdef _OPENMP
 #include <omp.h>
@@ -997,7 +1008,7 @@ static const char *__pyx_f[] = {
 struct __pyx_opt_args_6pysilk_5_silk_encode;
 struct __pyx_opt_args_6pysilk_5_silk_decode;
 
-/* "pysilk/_silk.pyx":81
+/* "pysilk/_silk.pyx":85
  *     return 0
  * 
  * cpdef inline void encode(object input,             # <<<<<<<<<<<<<<
@@ -1014,7 +1025,7 @@ struct __pyx_opt_args_6pysilk_5_silk_encode {
   int tencent;
 };
 
-/* "pysilk/_silk.pyx":173
+/* "pysilk/_silk.pyx":176
  *     PyMem_Free(enc)
  * 
  * cpdef inline void decode(object input,             # <<<<<<<<<<<<<<
@@ -1507,7 +1518,7 @@ static PyTypeObject *__pyx_ptype_7cpython_4type_type = 0;
 /* Module declarations from 'pysilk._silk' */
 static CYTHON_INLINE PyObject *__pyx_f_6pysilk_5_silk_i16_to_bytes(int16_t); /*proto*/
 static CYTHON_INLINE int16_t __pyx_f_6pysilk_5_silk_bytes_to_i16(PyObject *); /*proto*/
-static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_write_i16_le(PyObject *, int16_t, uint8_t); /*proto*/
+static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_write_i16_le(PyObject *, int16_t); /*proto*/
 static CYTHON_INLINE uint8_t __pyx_f_6pysilk_5_silk_PyFile_Check(PyObject *); /*proto*/
 static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *, PyObject *, int32_t, int32_t, int __pyx_skip_dispatch, struct __pyx_opt_args_6pysilk_5_silk_encode *__pyx_optional_args); /*proto*/
 static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *, PyObject *, int32_t, int __pyx_skip_dispatch, struct __pyx_opt_args_6pysilk_5_silk_decode *__pyx_optional_args); /*proto*/
@@ -1516,8 +1527,8 @@ extern int __pyx_module_is_main_pysilk___silk;
 int __pyx_module_is_main_pysilk___silk = 0;
 
 /* Implementation of 'pysilk._silk' */
-static PyObject *__pyx_builtin_TypeError;
 static PyObject *__pyx_builtin_MemoryError;
+static PyObject *__pyx_builtin_TypeError;
 static const char __pyx_k_3[] = "3";
 static const char __pyx_k_doc[] = "__doc__";
 static const char __pyx_k_str[] = "__str__";
@@ -2329,69 +2340,117 @@ static PyObject *__pyx_pf_6pysilk_5_silk_9SilkError_2__str__(CYTHON_UNUSED PyObj
  * 
  * 
  * cdef inline bytes i16_to_bytes(int16_t data):             # <<<<<<<<<<<<<<
- *     cdef uint8_t * p = <uint8_t *> &data
- *     cdef uint8_t buf[2]
+ *     cdef:
+ *         uint8_t * p = <uint8_t *> &data
  */
 
 static CYTHON_INLINE PyObject *__pyx_f_6pysilk_5_silk_i16_to_bytes(int16_t __pyx_v_data) {
   uint8_t *__pyx_v_p;
-  uint8_t __pyx_v_buf[2];
+  PyObject *__pyx_v_bt = 0;
+  uint8_t *__pyx_v_buf;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
+  int __pyx_t_2;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("i16_to_bytes", 0);
 
-  /* "pysilk/_silk.pyx":51
- * 
+  /* "pysilk/_silk.pyx":52
  * cdef inline bytes i16_to_bytes(int16_t data):
- *     cdef uint8_t * p = <uint8_t *> &data             # <<<<<<<<<<<<<<
- *     cdef uint8_t buf[2]
- *     buf[0] = p[0]
+ *     cdef:
+ *         uint8_t * p = <uint8_t *> &data             # <<<<<<<<<<<<<<
+ *         bytes bt = PyBytes_FromStringAndSize(NULL, 2)
+ *     if <PyObject*>bt == NULL:
  */
   __pyx_v_p = ((uint8_t *)(&__pyx_v_data));
 
   /* "pysilk/_silk.pyx":53
- *     cdef uint8_t * p = <uint8_t *> &data
- *     cdef uint8_t buf[2]
+ *     cdef:
+ *         uint8_t * p = <uint8_t *> &data
+ *         bytes bt = PyBytes_FromStringAndSize(NULL, 2)             # <<<<<<<<<<<<<<
+ *     if <PyObject*>bt == NULL:
+ *         raise MemoryError
+ */
+  __pyx_t_1 = PyBytes_FromStringAndSize(NULL, 2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 53, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_v_bt = ((PyObject*)__pyx_t_1);
+  __pyx_t_1 = 0;
+
+  /* "pysilk/_silk.pyx":54
+ *         uint8_t * p = <uint8_t *> &data
+ *         bytes bt = PyBytes_FromStringAndSize(NULL, 2)
+ *     if <PyObject*>bt == NULL:             # <<<<<<<<<<<<<<
+ *         raise MemoryError
+ *     cdef uint8_t* buf = <uint8_t*>PyBytes_AS_STRING(bt)
+ */
+  __pyx_t_2 = ((((PyObject *)__pyx_v_bt) == NULL) != 0);
+  if (unlikely(__pyx_t_2)) {
+
+    /* "pysilk/_silk.pyx":55
+ *         bytes bt = PyBytes_FromStringAndSize(NULL, 2)
+ *     if <PyObject*>bt == NULL:
+ *         raise MemoryError             # <<<<<<<<<<<<<<
+ *     cdef uint8_t* buf = <uint8_t*>PyBytes_AS_STRING(bt)
+ *     buf[0] = p[0]
+ */
+    PyErr_NoMemory(); __PYX_ERR(0, 55, __pyx_L1_error)
+
+    /* "pysilk/_silk.pyx":54
+ *         uint8_t * p = <uint8_t *> &data
+ *         bytes bt = PyBytes_FromStringAndSize(NULL, 2)
+ *     if <PyObject*>bt == NULL:             # <<<<<<<<<<<<<<
+ *         raise MemoryError
+ *     cdef uint8_t* buf = <uint8_t*>PyBytes_AS_STRING(bt)
+ */
+  }
+
+  /* "pysilk/_silk.pyx":56
+ *     if <PyObject*>bt == NULL:
+ *         raise MemoryError
+ *     cdef uint8_t* buf = <uint8_t*>PyBytes_AS_STRING(bt)             # <<<<<<<<<<<<<<
+ *     buf[0] = p[0]
+ *     buf[1] = p[1]
+ */
+  __pyx_v_buf = ((uint8_t *)PyBytes_AS_STRING(__pyx_v_bt));
+
+  /* "pysilk/_silk.pyx":57
+ *         raise MemoryError
+ *     cdef uint8_t* buf = <uint8_t*>PyBytes_AS_STRING(bt)
  *     buf[0] = p[0]             # <<<<<<<<<<<<<<
  *     buf[1] = p[1]
- *     return <bytes> buf[:2]
+ *     return bt
  */
   (__pyx_v_buf[0]) = (__pyx_v_p[0]);
 
-  /* "pysilk/_silk.pyx":54
- *     cdef uint8_t buf[2]
+  /* "pysilk/_silk.pyx":58
+ *     cdef uint8_t* buf = <uint8_t*>PyBytes_AS_STRING(bt)
  *     buf[0] = p[0]
  *     buf[1] = p[1]             # <<<<<<<<<<<<<<
- *     return <bytes> buf[:2]
+ *     return bt
  * 
  */
   (__pyx_v_buf[1]) = (__pyx_v_p[1]);
 
-  /* "pysilk/_silk.pyx":55
+  /* "pysilk/_silk.pyx":59
  *     buf[0] = p[0]
  *     buf[1] = p[1]
- *     return <bytes> buf[:2]             # <<<<<<<<<<<<<<
+ *     return bt             # <<<<<<<<<<<<<<
  * 
  * cdef inline int16_t bytes_to_i16(bytes data):
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyBytes_FromStringAndSize(((const char*)__pyx_v_buf) + 0, 2 - 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 55, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_INCREF(((PyObject*)__pyx_t_1));
-  __pyx_r = ((PyObject*)__pyx_t_1);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __Pyx_INCREF(__pyx_v_bt);
+  __pyx_r = __pyx_v_bt;
   goto __pyx_L0;
 
   /* "pysilk/_silk.pyx":50
  * 
  * 
  * cdef inline bytes i16_to_bytes(int16_t data):             # <<<<<<<<<<<<<<
- *     cdef uint8_t * p = <uint8_t *> &data
- *     cdef uint8_t buf[2]
+ *     cdef:
+ *         uint8_t * p = <uint8_t *> &data
  */
 
   /* function exit code */
@@ -2400,13 +2459,14 @@ static CYTHON_INLINE PyObject *__pyx_f_6pysilk_5_silk_i16_to_bytes(int16_t __pyx
   __Pyx_AddTraceback("pysilk._silk.i16_to_bytes", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = 0;
   __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_bt);
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "pysilk/_silk.pyx":57
- *     return <bytes> buf[:2]
+/* "pysilk/_silk.pyx":61
+ *     return bt
  * 
  * cdef inline int16_t bytes_to_i16(bytes data):             # <<<<<<<<<<<<<<
  *     cdef int16_t buf = 0
@@ -2425,7 +2485,7 @@ static CYTHON_INLINE int16_t __pyx_f_6pysilk_5_silk_bytes_to_i16(PyObject *__pyx
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("bytes_to_i16", 0);
 
-  /* "pysilk/_silk.pyx":58
+  /* "pysilk/_silk.pyx":62
  * 
  * cdef inline int16_t bytes_to_i16(bytes data):
  *     cdef int16_t buf = 0             # <<<<<<<<<<<<<<
@@ -2434,7 +2494,7 @@ static CYTHON_INLINE int16_t __pyx_f_6pysilk_5_silk_bytes_to_i16(PyObject *__pyx
  */
   __pyx_v_buf = 0;
 
-  /* "pysilk/_silk.pyx":59
+  /* "pysilk/_silk.pyx":63
  * cdef inline int16_t bytes_to_i16(bytes data):
  *     cdef int16_t buf = 0
  *     cdef uint8_t *p = <uint8_t *> &buf             # <<<<<<<<<<<<<<
@@ -2443,44 +2503,44 @@ static CYTHON_INLINE int16_t __pyx_f_6pysilk_5_silk_bytes_to_i16(PyObject *__pyx
  */
   __pyx_v_p = ((uint8_t *)(&__pyx_v_buf));
 
-  /* "pysilk/_silk.pyx":60
+  /* "pysilk/_silk.pyx":64
  *     cdef int16_t buf = 0
  *     cdef uint8_t *p = <uint8_t *> &buf
  *     p[0] = <uint8_t> data[0]             # <<<<<<<<<<<<<<
  *     p[1] = <uint8_t> data[1]
  *     return buf
  */
-  __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_data, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 60, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_data, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 64, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyInt_As_uint8_t(__pyx_t_1); if (unlikely((__pyx_t_2 == ((uint8_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 60, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_As_uint8_t(__pyx_t_1); if (unlikely((__pyx_t_2 == ((uint8_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 64, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   (__pyx_v_p[0]) = ((uint8_t)__pyx_t_2);
 
-  /* "pysilk/_silk.pyx":61
+  /* "pysilk/_silk.pyx":65
  *     cdef uint8_t *p = <uint8_t *> &buf
  *     p[0] = <uint8_t> data[0]
  *     p[1] = <uint8_t> data[1]             # <<<<<<<<<<<<<<
  *     return buf
  * 
  */
-  __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_data, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 61, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_data, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 65, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyInt_As_uint8_t(__pyx_t_1); if (unlikely((__pyx_t_2 == ((uint8_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 61, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_As_uint8_t(__pyx_t_1); if (unlikely((__pyx_t_2 == ((uint8_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 65, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   (__pyx_v_p[1]) = ((uint8_t)__pyx_t_2);
 
-  /* "pysilk/_silk.pyx":62
+  /* "pysilk/_silk.pyx":66
  *     p[0] = <uint8_t> data[0]
  *     p[1] = <uint8_t> data[1]
  *     return buf             # <<<<<<<<<<<<<<
  * 
- * cdef inline void write_i16_le(object output, int16_t data, uint8_t le):
+ * cdef inline void write_i16_le(object output, int16_t data):
  */
   __pyx_r = __pyx_v_buf;
   goto __pyx_L0;
 
-  /* "pysilk/_silk.pyx":57
- *     return <bytes> buf[:2]
+  /* "pysilk/_silk.pyx":61
+ *     return bt
  * 
  * cdef inline int16_t bytes_to_i16(bytes data):             # <<<<<<<<<<<<<<
  *     cdef int16_t buf = 0
@@ -2497,15 +2557,15 @@ static CYTHON_INLINE int16_t __pyx_f_6pysilk_5_silk_bytes_to_i16(PyObject *__pyx
   return __pyx_r;
 }
 
-/* "pysilk/_silk.pyx":64
+/* "pysilk/_silk.pyx":68
  *     return buf
  * 
- * cdef inline void write_i16_le(object output, int16_t data, uint8_t le):             # <<<<<<<<<<<<<<
- *     if not le:
- *         swap_i16(&data)
+ * cdef inline void write_i16_le(object output, int16_t data):             # <<<<<<<<<<<<<<
+ *     if SHOULD_SWAP:
+ *         data = swap_i16(data)
  */
 
-static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_write_i16_le(PyObject *__pyx_v_output, int16_t __pyx_v_data, uint8_t __pyx_v_le) {
+static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_write_i16_le(PyObject *__pyx_v_output, int16_t __pyx_v_data) {
   __Pyx_RefNannyDeclarations
   int __pyx_t_1;
   PyObject *__pyx_t_2 = NULL;
@@ -2517,44 +2577,44 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_write_i16_le(PyObject *__pyx_v_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("write_i16_le", 0);
 
-  /* "pysilk/_silk.pyx":65
+  /* "pysilk/_silk.pyx":69
  * 
- * cdef inline void write_i16_le(object output, int16_t data, uint8_t le):
- *     if not le:             # <<<<<<<<<<<<<<
- *         swap_i16(&data)
+ * cdef inline void write_i16_le(object output, int16_t data):
+ *     if SHOULD_SWAP:             # <<<<<<<<<<<<<<
+ *         data = swap_i16(data)
  *     output.write(i16_to_bytes(data))
  */
-  __pyx_t_1 = ((!(__pyx_v_le != 0)) != 0);
+  __pyx_t_1 = (SHOULD_SWAP != 0);
   if (__pyx_t_1) {
 
-    /* "pysilk/_silk.pyx":66
- * cdef inline void write_i16_le(object output, int16_t data, uint8_t le):
- *     if not le:
- *         swap_i16(&data)             # <<<<<<<<<<<<<<
+    /* "pysilk/_silk.pyx":70
+ * cdef inline void write_i16_le(object output, int16_t data):
+ *     if SHOULD_SWAP:
+ *         data = swap_i16(data)             # <<<<<<<<<<<<<<
  *     output.write(i16_to_bytes(data))
  * 
  */
-    swap_i16((&__pyx_v_data));
+    __pyx_v_data = swap_i16(__pyx_v_data);
 
-    /* "pysilk/_silk.pyx":65
+    /* "pysilk/_silk.pyx":69
  * 
- * cdef inline void write_i16_le(object output, int16_t data, uint8_t le):
- *     if not le:             # <<<<<<<<<<<<<<
- *         swap_i16(&data)
+ * cdef inline void write_i16_le(object output, int16_t data):
+ *     if SHOULD_SWAP:             # <<<<<<<<<<<<<<
+ *         data = swap_i16(data)
  *     output.write(i16_to_bytes(data))
  */
   }
 
-  /* "pysilk/_silk.pyx":67
- *     if not le:
- *         swap_i16(&data)
+  /* "pysilk/_silk.pyx":71
+ *     if SHOULD_SWAP:
+ *         data = swap_i16(data)
  *     output.write(i16_to_bytes(data))             # <<<<<<<<<<<<<<
  * 
- * cdef inline int16_t read_i16_le(object input, uint8_t le):
+ * cdef inline int16_t read_i16_le(object input):
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_output, __pyx_n_s_write); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 67, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_output, __pyx_n_s_write); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 71, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __pyx_f_6pysilk_5_silk_i16_to_bytes(__pyx_v_data); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 67, __pyx_L1_error)
+  __pyx_t_4 = __pyx_f_6pysilk_5_silk_i16_to_bytes(__pyx_v_data); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 71, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __pyx_t_5 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
@@ -2569,17 +2629,17 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_write_i16_le(PyObject *__pyx_v_
   __pyx_t_2 = (__pyx_t_5) ? __Pyx_PyObject_Call2Args(__pyx_t_3, __pyx_t_5, __pyx_t_4) : __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4);
   __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 67, __pyx_L1_error)
+  if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 71, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "pysilk/_silk.pyx":64
+  /* "pysilk/_silk.pyx":68
  *     return buf
  * 
- * cdef inline void write_i16_le(object output, int16_t data, uint8_t le):             # <<<<<<<<<<<<<<
- *     if not le:
- *         swap_i16(&data)
+ * cdef inline void write_i16_le(object output, int16_t data):             # <<<<<<<<<<<<<<
+ *     if SHOULD_SWAP:
+ *         data = swap_i16(data)
  */
 
   /* function exit code */
@@ -2594,15 +2654,15 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_write_i16_le(PyObject *__pyx_v_
   __Pyx_RefNannyFinishContext();
 }
 
-/* "pysilk/_silk.pyx":69
+/* "pysilk/_silk.pyx":73
  *     output.write(i16_to_bytes(data))
  * 
- * cdef inline int16_t read_i16_le(object input, uint8_t le):             # <<<<<<<<<<<<<<
+ * cdef inline int16_t read_i16_le(object input):             # <<<<<<<<<<<<<<
  *     chunk = input.read(2)  # type: bytes
  *     cdef int16_t data = bytes_to_i16(chunk)
  */
 
-static CYTHON_INLINE int16_t __pyx_f_6pysilk_5_silk_read_i16_le(PyObject *__pyx_v_input, uint8_t __pyx_v_le) {
+static CYTHON_INLINE int16_t __pyx_f_6pysilk_5_silk_read_i16_le(PyObject *__pyx_v_input) {
   PyObject *__pyx_v_chunk = NULL;
   int16_t __pyx_v_data;
   int16_t __pyx_r;
@@ -2616,14 +2676,14 @@ static CYTHON_INLINE int16_t __pyx_f_6pysilk_5_silk_read_i16_le(PyObject *__pyx_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("read_i16_le", 0);
 
-  /* "pysilk/_silk.pyx":70
+  /* "pysilk/_silk.pyx":74
  * 
- * cdef inline int16_t read_i16_le(object input, uint8_t le):
+ * cdef inline int16_t read_i16_le(object input):
  *     chunk = input.read(2)  # type: bytes             # <<<<<<<<<<<<<<
  *     cdef int16_t data = bytes_to_i16(chunk)
- *     if not le:
+ *     if SHOULD_SWAP:
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_input, __pyx_n_s_read); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 70, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_input, __pyx_n_s_read); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 74, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_3 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -2637,53 +2697,53 @@ static CYTHON_INLINE int16_t __pyx_f_6pysilk_5_silk_read_i16_le(PyObject *__pyx_
   }
   __pyx_t_1 = (__pyx_t_3) ? __Pyx_PyObject_Call2Args(__pyx_t_2, __pyx_t_3, __pyx_int_2) : __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_int_2);
   __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 70, __pyx_L1_error)
+  if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 74, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_chunk = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "pysilk/_silk.pyx":71
- * cdef inline int16_t read_i16_le(object input, uint8_t le):
+  /* "pysilk/_silk.pyx":75
+ * cdef inline int16_t read_i16_le(object input):
  *     chunk = input.read(2)  # type: bytes
  *     cdef int16_t data = bytes_to_i16(chunk)             # <<<<<<<<<<<<<<
- *     if not le:
- *         swap_i16(&data)
+ *     if SHOULD_SWAP:
+ *         data = swap_i16(data)
  */
-  if (!(likely(PyBytes_CheckExact(__pyx_v_chunk))||((__pyx_v_chunk) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_v_chunk)->tp_name), 0))) __PYX_ERR(0, 71, __pyx_L1_error)
+  if (!(likely(PyBytes_CheckExact(__pyx_v_chunk))||((__pyx_v_chunk) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_v_chunk)->tp_name), 0))) __PYX_ERR(0, 75, __pyx_L1_error)
   __pyx_v_data = __pyx_f_6pysilk_5_silk_bytes_to_i16(((PyObject*)__pyx_v_chunk));
 
-  /* "pysilk/_silk.pyx":72
+  /* "pysilk/_silk.pyx":76
  *     chunk = input.read(2)  # type: bytes
  *     cdef int16_t data = bytes_to_i16(chunk)
- *     if not le:             # <<<<<<<<<<<<<<
- *         swap_i16(&data)
+ *     if SHOULD_SWAP:             # <<<<<<<<<<<<<<
+ *         data = swap_i16(data)
  *     return data
  */
-  __pyx_t_4 = ((!(__pyx_v_le != 0)) != 0);
+  __pyx_t_4 = (SHOULD_SWAP != 0);
   if (__pyx_t_4) {
 
-    /* "pysilk/_silk.pyx":73
+    /* "pysilk/_silk.pyx":77
  *     cdef int16_t data = bytes_to_i16(chunk)
- *     if not le:
- *         swap_i16(&data)             # <<<<<<<<<<<<<<
+ *     if SHOULD_SWAP:
+ *         data = swap_i16(data)             # <<<<<<<<<<<<<<
  *     return data
  * 
  */
-    swap_i16((&__pyx_v_data));
+    __pyx_v_data = swap_i16(__pyx_v_data);
 
-    /* "pysilk/_silk.pyx":72
+    /* "pysilk/_silk.pyx":76
  *     chunk = input.read(2)  # type: bytes
  *     cdef int16_t data = bytes_to_i16(chunk)
- *     if not le:             # <<<<<<<<<<<<<<
- *         swap_i16(&data)
+ *     if SHOULD_SWAP:             # <<<<<<<<<<<<<<
+ *         data = swap_i16(data)
  *     return data
  */
   }
 
-  /* "pysilk/_silk.pyx":74
- *     if not le:
- *         swap_i16(&data)
+  /* "pysilk/_silk.pyx":78
+ *     if SHOULD_SWAP:
+ *         data = swap_i16(data)
  *     return data             # <<<<<<<<<<<<<<
  * 
  * cdef inline uint8_t PyFile_Check(object file):
@@ -2691,10 +2751,10 @@ static CYTHON_INLINE int16_t __pyx_f_6pysilk_5_silk_read_i16_le(PyObject *__pyx_
   __pyx_r = __pyx_v_data;
   goto __pyx_L0;
 
-  /* "pysilk/_silk.pyx":69
+  /* "pysilk/_silk.pyx":73
  *     output.write(i16_to_bytes(data))
  * 
- * cdef inline int16_t read_i16_le(object input, uint8_t le):             # <<<<<<<<<<<<<<
+ * cdef inline int16_t read_i16_le(object input):             # <<<<<<<<<<<<<<
  *     chunk = input.read(2)  # type: bytes
  *     cdef int16_t data = bytes_to_i16(chunk)
  */
@@ -2712,7 +2772,7 @@ static CYTHON_INLINE int16_t __pyx_f_6pysilk_5_silk_read_i16_le(PyObject *__pyx_
   return __pyx_r;
 }
 
-/* "pysilk/_silk.pyx":76
+/* "pysilk/_silk.pyx":80
  *     return data
  * 
  * cdef inline uint8_t PyFile_Check(object file):             # <<<<<<<<<<<<<<
@@ -2727,7 +2787,7 @@ static CYTHON_INLINE uint8_t __pyx_f_6pysilk_5_silk_PyFile_Check(PyObject *__pyx
   int __pyx_t_2;
   __Pyx_RefNannySetupContext("PyFile_Check", 0);
 
-  /* "pysilk/_silk.pyx":77
+  /* "pysilk/_silk.pyx":81
  * 
  * cdef inline uint8_t PyFile_Check(object file):
  *     if PyObject_HasAttrString(file, "read") and PyObject_HasAttrString(file, "write"):  # should we check seek method?             # <<<<<<<<<<<<<<
@@ -2745,7 +2805,7 @@ static CYTHON_INLINE uint8_t __pyx_f_6pysilk_5_silk_PyFile_Check(PyObject *__pyx
   __pyx_L4_bool_binop_done:;
   if (__pyx_t_1) {
 
-    /* "pysilk/_silk.pyx":78
+    /* "pysilk/_silk.pyx":82
  * cdef inline uint8_t PyFile_Check(object file):
  *     if PyObject_HasAttrString(file, "read") and PyObject_HasAttrString(file, "write"):  # should we check seek method?
  *         return 1             # <<<<<<<<<<<<<<
@@ -2755,7 +2815,7 @@ static CYTHON_INLINE uint8_t __pyx_f_6pysilk_5_silk_PyFile_Check(PyObject *__pyx
     __pyx_r = 1;
     goto __pyx_L0;
 
-    /* "pysilk/_silk.pyx":77
+    /* "pysilk/_silk.pyx":81
  * 
  * cdef inline uint8_t PyFile_Check(object file):
  *     if PyObject_HasAttrString(file, "read") and PyObject_HasAttrString(file, "write"):  # should we check seek method?             # <<<<<<<<<<<<<<
@@ -2764,7 +2824,7 @@ static CYTHON_INLINE uint8_t __pyx_f_6pysilk_5_silk_PyFile_Check(PyObject *__pyx
  */
   }
 
-  /* "pysilk/_silk.pyx":79
+  /* "pysilk/_silk.pyx":83
  *     if PyObject_HasAttrString(file, "read") and PyObject_HasAttrString(file, "write"):  # should we check seek method?
  *         return 1
  *     return 0             # <<<<<<<<<<<<<<
@@ -2774,7 +2834,7 @@ static CYTHON_INLINE uint8_t __pyx_f_6pysilk_5_silk_PyFile_Check(PyObject *__pyx
   __pyx_r = 0;
   goto __pyx_L0;
 
-  /* "pysilk/_silk.pyx":76
+  /* "pysilk/_silk.pyx":80
  *     return data
  * 
  * cdef inline uint8_t PyFile_Check(object file):             # <<<<<<<<<<<<<<
@@ -2788,7 +2848,7 @@ static CYTHON_INLINE uint8_t __pyx_f_6pysilk_5_silk_PyFile_Check(PyObject *__pyx
   return __pyx_r;
 }
 
-/* "pysilk/_silk.pyx":81
+/* "pysilk/_silk.pyx":85
  *     return 0
  * 
  * cpdef inline void encode(object input,             # <<<<<<<<<<<<<<
@@ -2802,7 +2862,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
   int32_t __pyx_v_packet_loss_percentage = ((int32_t)0);
   int32_t __pyx_v_complexity = ((int32_t)2);
 
-  /* "pysilk/_silk.pyx":88
+  /* "pysilk/_silk.pyx":92
  *                   int32_t packet_loss_percentage = 0,
  *                   int32_t complexity = 2,
  *                   bint use_inband_fec = False,             # <<<<<<<<<<<<<<
@@ -2811,7 +2871,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   int __pyx_v_use_inband_fec = ((int)0);
 
-  /* "pysilk/_silk.pyx":89
+  /* "pysilk/_silk.pyx":93
  *                   int32_t complexity = 2,
  *                   bint use_inband_fec = False,
  *                   bint use_dtx = False,             # <<<<<<<<<<<<<<
@@ -2820,7 +2880,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   int __pyx_v_use_dtx = ((int)0);
 
-  /* "pysilk/_silk.pyx":90
+  /* "pysilk/_silk.pyx":94
  *                   bint use_inband_fec = False,
  *                   bint use_dtx = False,
  *                   bint tencent = True) with gil:             # <<<<<<<<<<<<<<
@@ -2830,7 +2890,6 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
   int __pyx_v_tencent = ((int)1);
   SKP_SILK_SDK_EncControlStruct __pyx_v_enc_control;
   SKP_SILK_SDK_EncControlStruct __pyx_v_enc_status;
-  uint8_t __pyx_v_le;
   int32_t __pyx_v_enc_size_bytes;
   int32_t __pyx_v_code;
   void *__pyx_v_enc;
@@ -2875,7 +2934,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
   __Pyx_INCREF(__pyx_v_input);
   __Pyx_INCREF(__pyx_v_output);
 
-  /* "pysilk/_silk.pyx":106
+  /* "pysilk/_silk.pyx":110
  *     :return: None
  *     """
  *     if not PyFile_Check(input):             # <<<<<<<<<<<<<<
@@ -2885,26 +2944,26 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
   __pyx_t_1 = ((!(__pyx_f_6pysilk_5_silk_PyFile_Check(__pyx_v_input) != 0)) != 0);
   if (unlikely(__pyx_t_1)) {
 
-    /* "pysilk/_silk.pyx":107
+    /* "pysilk/_silk.pyx":111
  *     """
  *     if not PyFile_Check(input):
  *         raise TypeError("input except a file-like object, got %s" % type(input).__name__)             # <<<<<<<<<<<<<<
  *     if not PyFile_Check(output):
  *         raise TypeError("output except a file-like object, got %s" % type(output).__name__)
  */
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)Py_TYPE(__pyx_v_input)), __pyx_n_s_name); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 107, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)Py_TYPE(__pyx_v_input)), __pyx_n_s_name); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 111, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = __Pyx_PyUnicode_FormatSafe(__pyx_kp_u_input_except_a_file_like_object, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 107, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyUnicode_FormatSafe(__pyx_kp_u_input_except_a_file_like_object, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 111, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_builtin_TypeError, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 107, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_builtin_TypeError, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 111, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_Raise(__pyx_t_2, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __PYX_ERR(0, 107, __pyx_L1_error)
+    __PYX_ERR(0, 111, __pyx_L1_error)
 
-    /* "pysilk/_silk.pyx":106
+    /* "pysilk/_silk.pyx":110
  *     :return: None
  *     """
  *     if not PyFile_Check(input):             # <<<<<<<<<<<<<<
@@ -2913,7 +2972,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   }
 
-  /* "pysilk/_silk.pyx":108
+  /* "pysilk/_silk.pyx":112
  *     if not PyFile_Check(input):
  *         raise TypeError("input except a file-like object, got %s" % type(input).__name__)
  *     if not PyFile_Check(output):             # <<<<<<<<<<<<<<
@@ -2923,26 +2982,26 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
   __pyx_t_1 = ((!(__pyx_f_6pysilk_5_silk_PyFile_Check(__pyx_v_output) != 0)) != 0);
   if (unlikely(__pyx_t_1)) {
 
-    /* "pysilk/_silk.pyx":109
+    /* "pysilk/_silk.pyx":113
  *         raise TypeError("input except a file-like object, got %s" % type(input).__name__)
  *     if not PyFile_Check(output):
  *         raise TypeError("output except a file-like object, got %s" % type(output).__name__)             # <<<<<<<<<<<<<<
  * 
  *     cdef SKP_SILK_SDK_EncControlStruct enc_control
  */
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)Py_TYPE(__pyx_v_output)), __pyx_n_s_name); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 109, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)Py_TYPE(__pyx_v_output)), __pyx_n_s_name); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 113, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = __Pyx_PyUnicode_FormatSafe(__pyx_kp_u_output_except_a_file_like_object, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 109, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyUnicode_FormatSafe(__pyx_kp_u_output_except_a_file_like_object, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 113, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_builtin_TypeError, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 109, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_builtin_TypeError, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 113, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_Raise(__pyx_t_2, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __PYX_ERR(0, 109, __pyx_L1_error)
+    __PYX_ERR(0, 113, __pyx_L1_error)
 
-    /* "pysilk/_silk.pyx":108
+    /* "pysilk/_silk.pyx":112
  *     if not PyFile_Check(input):
  *         raise TypeError("input except a file-like object, got %s" % type(input).__name__)
  *     if not PyFile_Check(output):             # <<<<<<<<<<<<<<
@@ -2951,7 +3010,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   }
 
-  /* "pysilk/_silk.pyx":112
+  /* "pysilk/_silk.pyx":116
  * 
  *     cdef SKP_SILK_SDK_EncControlStruct enc_control
  *     enc_control.API_sampleRate = sample_rate             # <<<<<<<<<<<<<<
@@ -2960,7 +3019,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   __pyx_v_enc_control.API_sampleRate = __pyx_v_sample_rate;
 
-  /* "pysilk/_silk.pyx":113
+  /* "pysilk/_silk.pyx":117
  *     cdef SKP_SILK_SDK_EncControlStruct enc_control
  *     enc_control.API_sampleRate = sample_rate
  *     enc_control.maxInternalSampleRate = max_internal_sample_rate             # <<<<<<<<<<<<<<
@@ -2969,7 +3028,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   __pyx_v_enc_control.maxInternalSampleRate = __pyx_v_max_internal_sample_rate;
 
-  /* "pysilk/_silk.pyx":114
+  /* "pysilk/_silk.pyx":118
  *     enc_control.API_sampleRate = sample_rate
  *     enc_control.maxInternalSampleRate = max_internal_sample_rate
  *     enc_control.packetSize = (20 * sample_rate) / 1000             # <<<<<<<<<<<<<<
@@ -2978,7 +3037,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   __pyx_v_enc_control.packetSize = ((20 * __pyx_v_sample_rate) / 0x3E8);
 
-  /* "pysilk/_silk.pyx":115
+  /* "pysilk/_silk.pyx":119
  *     enc_control.maxInternalSampleRate = max_internal_sample_rate
  *     enc_control.packetSize = (20 * sample_rate) / 1000
  *     enc_control.bitRate = bit_rate             # <<<<<<<<<<<<<<
@@ -2987,7 +3046,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   __pyx_v_enc_control.bitRate = __pyx_v_bit_rate;
 
-  /* "pysilk/_silk.pyx":116
+  /* "pysilk/_silk.pyx":120
  *     enc_control.packetSize = (20 * sample_rate) / 1000
  *     enc_control.bitRate = bit_rate
  *     enc_control.packetLossPercentage = packet_loss_percentage             # <<<<<<<<<<<<<<
@@ -2996,7 +3055,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   __pyx_v_enc_control.packetLossPercentage = __pyx_v_packet_loss_percentage;
 
-  /* "pysilk/_silk.pyx":117
+  /* "pysilk/_silk.pyx":121
  *     enc_control.bitRate = bit_rate
  *     enc_control.packetLossPercentage = packet_loss_percentage
  *     enc_control.complexity = complexity             # <<<<<<<<<<<<<<
@@ -3005,7 +3064,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   __pyx_v_enc_control.complexity = __pyx_v_complexity;
 
-  /* "pysilk/_silk.pyx":118
+  /* "pysilk/_silk.pyx":122
  *     enc_control.packetLossPercentage = packet_loss_percentage
  *     enc_control.complexity = complexity
  *     enc_control.useInBandFEC = use_inband_fec             # <<<<<<<<<<<<<<
@@ -3014,7 +3073,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   __pyx_v_enc_control.useInBandFEC = __pyx_v_use_inband_fec;
 
-  /* "pysilk/_silk.pyx":119
+  /* "pysilk/_silk.pyx":123
  *     enc_control.complexity = complexity
  *     enc_control.useInBandFEC = use_inband_fec
  *     enc_control.useDTX = use_dtx             # <<<<<<<<<<<<<<
@@ -3023,7 +3082,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   __pyx_v_enc_control.useDTX = __pyx_v_use_dtx;
 
-  /* "pysilk/_silk.pyx":122
+  /* "pysilk/_silk.pyx":126
  * 
  *     cdef SKP_SILK_SDK_EncControlStruct enc_status
  *     enc_status.API_sampleRate = 0             # <<<<<<<<<<<<<<
@@ -3032,7 +3091,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   __pyx_v_enc_status.API_sampleRate = 0;
 
-  /* "pysilk/_silk.pyx":123
+  /* "pysilk/_silk.pyx":127
  *     cdef SKP_SILK_SDK_EncControlStruct enc_status
  *     enc_status.API_sampleRate = 0
  *     enc_status.maxInternalSampleRate = 0             # <<<<<<<<<<<<<<
@@ -3041,7 +3100,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   __pyx_v_enc_status.maxInternalSampleRate = 0;
 
-  /* "pysilk/_silk.pyx":124
+  /* "pysilk/_silk.pyx":128
  *     enc_status.API_sampleRate = 0
  *     enc_status.maxInternalSampleRate = 0
  *     enc_status.packetSize = 0             # <<<<<<<<<<<<<<
@@ -3050,7 +3109,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   __pyx_v_enc_status.packetSize = 0;
 
-  /* "pysilk/_silk.pyx":125
+  /* "pysilk/_silk.pyx":129
  *     enc_status.maxInternalSampleRate = 0
  *     enc_status.packetSize = 0
  *     enc_status.bitRate = 0             # <<<<<<<<<<<<<<
@@ -3059,7 +3118,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   __pyx_v_enc_status.bitRate = 0;
 
-  /* "pysilk/_silk.pyx":126
+  /* "pysilk/_silk.pyx":130
  *     enc_status.packetSize = 0
  *     enc_status.bitRate = 0
  *     enc_status.packetLossPercentage = 0             # <<<<<<<<<<<<<<
@@ -3068,7 +3127,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   __pyx_v_enc_status.packetLossPercentage = 0;
 
-  /* "pysilk/_silk.pyx":127
+  /* "pysilk/_silk.pyx":131
  *     enc_status.bitRate = 0
  *     enc_status.packetLossPercentage = 0
  *     enc_status.complexity = 0             # <<<<<<<<<<<<<<
@@ -3077,35 +3136,26 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   __pyx_v_enc_status.complexity = 0;
 
-  /* "pysilk/_silk.pyx":128
+  /* "pysilk/_silk.pyx":132
  *     enc_status.packetLossPercentage = 0
  *     enc_status.complexity = 0
  *     enc_status.useInBandFEC = 0             # <<<<<<<<<<<<<<
  *     enc_status.useDTX = 0
- *     cdef uint8_t le = is_le()  # is little endian
+ * 
  */
   __pyx_v_enc_status.useInBandFEC = 0;
 
-  /* "pysilk/_silk.pyx":129
+  /* "pysilk/_silk.pyx":133
  *     enc_status.complexity = 0
  *     enc_status.useInBandFEC = 0
  *     enc_status.useDTX = 0             # <<<<<<<<<<<<<<
- *     cdef uint8_t le = is_le()  # is little endian
- * 
- */
-  __pyx_v_enc_status.useDTX = 0;
-
-  /* "pysilk/_silk.pyx":130
- *     enc_status.useInBandFEC = 0
- *     enc_status.useDTX = 0
- *     cdef uint8_t le = is_le()  # is little endian             # <<<<<<<<<<<<<<
  * 
  *     cdef int32_t enc_size_bytes = 0
  */
-  __pyx_v_le = is_le();
+  __pyx_v_enc_status.useDTX = 0;
 
-  /* "pysilk/_silk.pyx":132
- *     cdef uint8_t le = is_le()  # is little endian
+  /* "pysilk/_silk.pyx":135
+ *     enc_status.useDTX = 0
  * 
  *     cdef int32_t enc_size_bytes = 0             # <<<<<<<<<<<<<<
  *     cdef int32_t code = SKP_Silk_SDK_Get_Encoder_Size(&enc_size_bytes)
@@ -3113,7 +3163,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   __pyx_v_enc_size_bytes = 0;
 
-  /* "pysilk/_silk.pyx":133
+  /* "pysilk/_silk.pyx":136
  * 
  *     cdef int32_t enc_size_bytes = 0
  *     cdef int32_t code = SKP_Silk_SDK_Get_Encoder_Size(&enc_size_bytes)             # <<<<<<<<<<<<<<
@@ -3122,7 +3172,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   __pyx_v_code = SKP_Silk_SDK_Get_Encoder_Size((&__pyx_v_enc_size_bytes));
 
-  /* "pysilk/_silk.pyx":134
+  /* "pysilk/_silk.pyx":137
  *     cdef int32_t enc_size_bytes = 0
  *     cdef int32_t code = SKP_Silk_SDK_Get_Encoder_Size(&enc_size_bytes)
  *     if code != 0:             # <<<<<<<<<<<<<<
@@ -3132,16 +3182,16 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
   __pyx_t_1 = ((__pyx_v_code != 0) != 0);
   if (unlikely(__pyx_t_1)) {
 
-    /* "pysilk/_silk.pyx":135
+    /* "pysilk/_silk.pyx":138
  *     cdef int32_t code = SKP_Silk_SDK_Get_Encoder_Size(&enc_size_bytes)
  *     if code != 0:
  *         raise SilkError(code)             # <<<<<<<<<<<<<<
  *     cdef void * enc = PyMem_Malloc(<size_t> enc_size_bytes)
  *     if enc == NULL:
  */
-    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_SilkError); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 135, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_SilkError); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 138, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_4 = __Pyx_PyInt_From_int32_t(__pyx_v_code); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 135, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyInt_From_int32_t(__pyx_v_code); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 138, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __pyx_t_5 = NULL;
     if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
@@ -3156,14 +3206,14 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
     __pyx_t_2 = (__pyx_t_5) ? __Pyx_PyObject_Call2Args(__pyx_t_3, __pyx_t_5, __pyx_t_4) : __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4);
     __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 135, __pyx_L1_error)
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 138, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_Raise(__pyx_t_2, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __PYX_ERR(0, 135, __pyx_L1_error)
+    __PYX_ERR(0, 138, __pyx_L1_error)
 
-    /* "pysilk/_silk.pyx":134
+    /* "pysilk/_silk.pyx":137
  *     cdef int32_t enc_size_bytes = 0
  *     cdef int32_t code = SKP_Silk_SDK_Get_Encoder_Size(&enc_size_bytes)
  *     if code != 0:             # <<<<<<<<<<<<<<
@@ -3172,7 +3222,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   }
 
-  /* "pysilk/_silk.pyx":136
+  /* "pysilk/_silk.pyx":139
  *     if code != 0:
  *         raise SilkError(code)
  *     cdef void * enc = PyMem_Malloc(<size_t> enc_size_bytes)             # <<<<<<<<<<<<<<
@@ -3181,7 +3231,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   __pyx_v_enc = PyMem_Malloc(((size_t)__pyx_v_enc_size_bytes));
 
-  /* "pysilk/_silk.pyx":137
+  /* "pysilk/_silk.pyx":140
  *         raise SilkError(code)
  *     cdef void * enc = PyMem_Malloc(<size_t> enc_size_bytes)
  *     if enc == NULL:             # <<<<<<<<<<<<<<
@@ -3191,16 +3241,16 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
   __pyx_t_1 = ((__pyx_v_enc == NULL) != 0);
   if (unlikely(__pyx_t_1)) {
 
-    /* "pysilk/_silk.pyx":138
+    /* "pysilk/_silk.pyx":141
  *     cdef void * enc = PyMem_Malloc(<size_t> enc_size_bytes)
  *     if enc == NULL:
  *         raise MemoryError             # <<<<<<<<<<<<<<
  *     code = SKP_Silk_SDK_InitEncoder(enc, &enc_status)
  *     if code != 0:
  */
-    PyErr_NoMemory(); __PYX_ERR(0, 138, __pyx_L1_error)
+    PyErr_NoMemory(); __PYX_ERR(0, 141, __pyx_L1_error)
 
-    /* "pysilk/_silk.pyx":137
+    /* "pysilk/_silk.pyx":140
  *         raise SilkError(code)
  *     cdef void * enc = PyMem_Malloc(<size_t> enc_size_bytes)
  *     if enc == NULL:             # <<<<<<<<<<<<<<
@@ -3209,7 +3259,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   }
 
-  /* "pysilk/_silk.pyx":139
+  /* "pysilk/_silk.pyx":142
  *     if enc == NULL:
  *         raise MemoryError
  *     code = SKP_Silk_SDK_InitEncoder(enc, &enc_status)             # <<<<<<<<<<<<<<
@@ -3218,7 +3268,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   __pyx_v_code = SKP_Silk_SDK_InitEncoder(__pyx_v_enc, (&__pyx_v_enc_status));
 
-  /* "pysilk/_silk.pyx":140
+  /* "pysilk/_silk.pyx":143
  *         raise MemoryError
  *     code = SKP_Silk_SDK_InitEncoder(enc, &enc_status)
  *     if code != 0:             # <<<<<<<<<<<<<<
@@ -3228,7 +3278,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
   __pyx_t_1 = ((__pyx_v_code != 0) != 0);
   if (unlikely(__pyx_t_1)) {
 
-    /* "pysilk/_silk.pyx":141
+    /* "pysilk/_silk.pyx":144
  *     code = SKP_Silk_SDK_InitEncoder(enc, &enc_status)
  *     if code != 0:
  *         PyMem_Free(enc)             # <<<<<<<<<<<<<<
@@ -3237,16 +3287,16 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
     PyMem_Free(__pyx_v_enc);
 
-    /* "pysilk/_silk.pyx":142
+    /* "pysilk/_silk.pyx":145
  *     if code != 0:
  *         PyMem_Free(enc)
  *         raise SilkError(code)             # <<<<<<<<<<<<<<
  *     cdef int32_t frame_size = sample_rate / 1000 * 40
  *     if tencent:
  */
-    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_SilkError); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 142, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_SilkError); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 145, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_4 = __Pyx_PyInt_From_int32_t(__pyx_v_code); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 142, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyInt_From_int32_t(__pyx_v_code); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 145, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __pyx_t_5 = NULL;
     if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
@@ -3261,14 +3311,14 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
     __pyx_t_2 = (__pyx_t_5) ? __Pyx_PyObject_Call2Args(__pyx_t_3, __pyx_t_5, __pyx_t_4) : __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4);
     __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 142, __pyx_L1_error)
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 145, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_Raise(__pyx_t_2, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __PYX_ERR(0, 142, __pyx_L1_error)
+    __PYX_ERR(0, 145, __pyx_L1_error)
 
-    /* "pysilk/_silk.pyx":140
+    /* "pysilk/_silk.pyx":143
  *         raise MemoryError
  *     code = SKP_Silk_SDK_InitEncoder(enc, &enc_status)
  *     if code != 0:             # <<<<<<<<<<<<<<
@@ -3277,7 +3327,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   }
 
-  /* "pysilk/_silk.pyx":143
+  /* "pysilk/_silk.pyx":146
  *         PyMem_Free(enc)
  *         raise SilkError(code)
  *     cdef int32_t frame_size = sample_rate / 1000 * 40             # <<<<<<<<<<<<<<
@@ -3286,7 +3336,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   __pyx_v_frame_size = ((((long)__pyx_v_sample_rate) / 0x3E8) * 40);
 
-  /* "pysilk/_silk.pyx":144
+  /* "pysilk/_silk.pyx":147
  *         raise SilkError(code)
  *     cdef int32_t frame_size = sample_rate / 1000 * 40
  *     if tencent:             # <<<<<<<<<<<<<<
@@ -3296,14 +3346,14 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
   __pyx_t_1 = (__pyx_v_tencent != 0);
   if (__pyx_t_1) {
 
-    /* "pysilk/_silk.pyx":145
+    /* "pysilk/_silk.pyx":148
  *     cdef int32_t frame_size = sample_rate / 1000 * 40
  *     if tencent:
  *         output.write(b"\x02#!SILK_V3")             # <<<<<<<<<<<<<<
  *     else:
  *         output.write(b"#!SILK_V3")
  */
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_output, __pyx_n_s_write); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 145, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_output, __pyx_n_s_write); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 148, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_4 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
@@ -3317,12 +3367,12 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
     }
     __pyx_t_2 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_3, __pyx_t_4, __pyx_kp_b_SILK_V3) : __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_kp_b_SILK_V3);
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 145, __pyx_L1_error)
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 148, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "pysilk/_silk.pyx":144
+    /* "pysilk/_silk.pyx":147
  *         raise SilkError(code)
  *     cdef int32_t frame_size = sample_rate / 1000 * 40
  *     if tencent:             # <<<<<<<<<<<<<<
@@ -3332,7 +3382,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
     goto __pyx_L8;
   }
 
-  /* "pysilk/_silk.pyx":147
+  /* "pysilk/_silk.pyx":150
  *         output.write(b"\x02#!SILK_V3")
  *     else:
  *         output.write(b"#!SILK_V3")             # <<<<<<<<<<<<<<
@@ -3340,7 +3390,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  *     cdef uint8_t payload[1250]
  */
   /*else*/ {
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_output, __pyx_n_s_write); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 147, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_output, __pyx_n_s_write); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 150, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_4 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
@@ -3354,14 +3404,14 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
     }
     __pyx_t_2 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_3, __pyx_t_4, __pyx_kp_b_SILK_V3_2) : __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_kp_b_SILK_V3_2);
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 147, __pyx_L1_error)
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 150, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   }
   __pyx_L8:;
 
-  /* "pysilk/_silk.pyx":148
+  /* "pysilk/_silk.pyx":151
  *     else:
  *         output.write(b"#!SILK_V3")
  *     cdef int16_t n_bytes = 1250             # <<<<<<<<<<<<<<
@@ -3370,7 +3420,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   __pyx_v_n_bytes = 0x4E2;
 
-  /* "pysilk/_silk.pyx":150
+  /* "pysilk/_silk.pyx":153
  *     cdef int16_t n_bytes = 1250
  *     cdef uint8_t payload[1250]
  *     while True:             # <<<<<<<<<<<<<<
@@ -3379,16 +3429,16 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   while (1) {
 
-    /* "pysilk/_silk.pyx":151
+    /* "pysilk/_silk.pyx":154
  *     cdef uint8_t payload[1250]
  *     while True:
  *         chunk = input.read(frame_size)  # type: bytes             # <<<<<<<<<<<<<<
  *         if not PyBytes_Check(chunk):
  *             PyMem_Free(enc)
  */
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_input, __pyx_n_s_read); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 151, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_input, __pyx_n_s_read); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 154, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_4 = __Pyx_PyInt_From_int32_t(__pyx_v_frame_size); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 151, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyInt_From_int32_t(__pyx_v_frame_size); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 154, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __pyx_t_5 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
@@ -3403,13 +3453,13 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
     __pyx_t_2 = (__pyx_t_5) ? __Pyx_PyObject_Call2Args(__pyx_t_3, __pyx_t_5, __pyx_t_4) : __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4);
     __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 151, __pyx_L1_error)
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 154, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_XDECREF_SET(__pyx_v_chunk, __pyx_t_2);
     __pyx_t_2 = 0;
 
-    /* "pysilk/_silk.pyx":152
+    /* "pysilk/_silk.pyx":155
  *     while True:
  *         chunk = input.read(frame_size)  # type: bytes
  *         if not PyBytes_Check(chunk):             # <<<<<<<<<<<<<<
@@ -3419,7 +3469,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
     __pyx_t_1 = ((!(PyBytes_Check(__pyx_v_chunk) != 0)) != 0);
     if (unlikely(__pyx_t_1)) {
 
-      /* "pysilk/_silk.pyx":153
+      /* "pysilk/_silk.pyx":156
  *         chunk = input.read(frame_size)  # type: bytes
  *         if not PyBytes_Check(chunk):
  *             PyMem_Free(enc)             # <<<<<<<<<<<<<<
@@ -3428,29 +3478,29 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
       PyMem_Free(__pyx_v_enc);
 
-      /* "pysilk/_silk.pyx":154
+      /* "pysilk/_silk.pyx":157
  *         if not PyBytes_Check(chunk):
  *             PyMem_Free(enc)
  *             raise TypeError(f"input must be a file-like rb object, got {type(input).__name__}")             # <<<<<<<<<<<<<<
  * 
  *         n_bytes = 1250
  */
-      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)Py_TYPE(__pyx_v_input)), __pyx_n_s_name); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 154, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)Py_TYPE(__pyx_v_input)), __pyx_n_s_name); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 157, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_3 = __Pyx_PyObject_FormatSimple(__pyx_t_2, __pyx_empty_unicode); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 154, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_FormatSimple(__pyx_t_2, __pyx_empty_unicode); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 157, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __pyx_t_2 = __Pyx_PyUnicode_Concat(__pyx_kp_u_input_must_be_a_file_like_rb_obj, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 154, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyUnicode_Concat(__pyx_kp_u_input_must_be_a_file_like_rb_obj, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 157, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_builtin_TypeError, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 154, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_builtin_TypeError, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 157, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __Pyx_Raise(__pyx_t_3, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __PYX_ERR(0, 154, __pyx_L1_error)
+      __PYX_ERR(0, 157, __pyx_L1_error)
 
-      /* "pysilk/_silk.pyx":152
+      /* "pysilk/_silk.pyx":155
  *     while True:
  *         chunk = input.read(frame_size)  # type: bytes
  *         if not PyBytes_Check(chunk):             # <<<<<<<<<<<<<<
@@ -3459,7 +3509,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
     }
 
-    /* "pysilk/_silk.pyx":156
+    /* "pysilk/_silk.pyx":159
  *             raise TypeError(f"input must be a file-like rb object, got {type(input).__name__}")
  * 
  *         n_bytes = 1250             # <<<<<<<<<<<<<<
@@ -3468,18 +3518,18 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
     __pyx_v_n_bytes = 0x4E2;
 
-    /* "pysilk/_silk.pyx":157
+    /* "pysilk/_silk.pyx":160
  * 
  *         n_bytes = 1250
  *         if <int32_t> PyBytes_Size(chunk) < frame_size:             # <<<<<<<<<<<<<<
  *             break
  *         code = SKP_Silk_SDK_Encode(enc,
  */
-    __pyx_t_6 = PyBytes_Size(__pyx_v_chunk); if (unlikely(__pyx_t_6 == ((Py_ssize_t)-1L))) __PYX_ERR(0, 157, __pyx_L1_error)
+    __pyx_t_6 = PyBytes_Size(__pyx_v_chunk); if (unlikely(__pyx_t_6 == ((Py_ssize_t)-1L))) __PYX_ERR(0, 160, __pyx_L1_error)
     __pyx_t_1 = ((((int32_t)__pyx_t_6) < __pyx_v_frame_size) != 0);
     if (__pyx_t_1) {
 
-      /* "pysilk/_silk.pyx":158
+      /* "pysilk/_silk.pyx":161
  *         n_bytes = 1250
  *         if <int32_t> PyBytes_Size(chunk) < frame_size:
  *             break             # <<<<<<<<<<<<<<
@@ -3488,7 +3538,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
       goto __pyx_L10_break;
 
-      /* "pysilk/_silk.pyx":157
+      /* "pysilk/_silk.pyx":160
  * 
  *         n_bytes = 1250
  *         if <int32_t> PyBytes_Size(chunk) < frame_size:             # <<<<<<<<<<<<<<
@@ -3497,16 +3547,16 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
     }
 
-    /* "pysilk/_silk.pyx":162
+    /* "pysilk/_silk.pyx":165
  *                                    &enc_control,
  *                                    <int16_t *> PyBytes_AS_STRING(chunk),
  *                                    <int32_t> (PyBytes_Size(chunk) / 2),             # <<<<<<<<<<<<<<
  *                                    payload,
  *                                    &n_bytes)
  */
-    __pyx_t_6 = PyBytes_Size(__pyx_v_chunk); if (unlikely(__pyx_t_6 == ((Py_ssize_t)-1L))) __PYX_ERR(0, 162, __pyx_L1_error)
+    __pyx_t_6 = PyBytes_Size(__pyx_v_chunk); if (unlikely(__pyx_t_6 == ((Py_ssize_t)-1L))) __PYX_ERR(0, 165, __pyx_L1_error)
 
-    /* "pysilk/_silk.pyx":159
+    /* "pysilk/_silk.pyx":162
  *         if <int32_t> PyBytes_Size(chunk) < frame_size:
  *             break
  *         code = SKP_Silk_SDK_Encode(enc,             # <<<<<<<<<<<<<<
@@ -3515,7 +3565,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
     __pyx_v_code = SKP_Silk_SDK_Encode(__pyx_v_enc, (&__pyx_v_enc_control), ((int16_t *)PyBytes_AS_STRING(__pyx_v_chunk)), ((int32_t)(__pyx_t_6 / 2)), __pyx_v_payload, (&__pyx_v_n_bytes));
 
-    /* "pysilk/_silk.pyx":165
+    /* "pysilk/_silk.pyx":168
  *                                    payload,
  *                                    &n_bytes)
  *         if code != 0:             # <<<<<<<<<<<<<<
@@ -3525,7 +3575,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
     __pyx_t_1 = ((__pyx_v_code != 0) != 0);
     if (unlikely(__pyx_t_1)) {
 
-      /* "pysilk/_silk.pyx":166
+      /* "pysilk/_silk.pyx":169
  *                                    &n_bytes)
  *         if code != 0:
  *             PyMem_Free(enc)             # <<<<<<<<<<<<<<
@@ -3534,16 +3584,16 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
       PyMem_Free(__pyx_v_enc);
 
-      /* "pysilk/_silk.pyx":167
+      /* "pysilk/_silk.pyx":170
  *         if code != 0:
  *             PyMem_Free(enc)
  *             raise SilkError(code)             # <<<<<<<<<<<<<<
  * 
- *         write_i16_le(output, n_bytes, le)
+ *         write_i16_le(output, n_bytes)
  */
-      __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_SilkError); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 167, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_SilkError); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 170, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_4 = __Pyx_PyInt_From_int32_t(__pyx_v_code); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 167, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyInt_From_int32_t(__pyx_v_code); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 170, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __pyx_t_5 = NULL;
       if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_2))) {
@@ -3558,14 +3608,14 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
       __pyx_t_3 = (__pyx_t_5) ? __Pyx_PyObject_Call2Args(__pyx_t_2, __pyx_t_5, __pyx_t_4) : __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_4);
       __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 167, __pyx_L1_error)
+      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 170, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __Pyx_Raise(__pyx_t_3, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __PYX_ERR(0, 167, __pyx_L1_error)
+      __PYX_ERR(0, 170, __pyx_L1_error)
 
-      /* "pysilk/_silk.pyx":165
+      /* "pysilk/_silk.pyx":168
  *                                    payload,
  *                                    &n_bytes)
  *         if code != 0:             # <<<<<<<<<<<<<<
@@ -3574,25 +3624,25 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
     }
 
-    /* "pysilk/_silk.pyx":169
+    /* "pysilk/_silk.pyx":172
  *             raise SilkError(code)
  * 
- *         write_i16_le(output, n_bytes, le)             # <<<<<<<<<<<<<<
+ *         write_i16_le(output, n_bytes)             # <<<<<<<<<<<<<<
  *         output.write(<bytes> payload[0:n_bytes])
  *     PyMem_Free(enc)
  */
-    __pyx_f_6pysilk_5_silk_write_i16_le(__pyx_v_output, __pyx_v_n_bytes, __pyx_v_le);
+    __pyx_f_6pysilk_5_silk_write_i16_le(__pyx_v_output, __pyx_v_n_bytes);
 
-    /* "pysilk/_silk.pyx":170
+    /* "pysilk/_silk.pyx":173
  * 
- *         write_i16_le(output, n_bytes, le)
+ *         write_i16_le(output, n_bytes)
  *         output.write(<bytes> payload[0:n_bytes])             # <<<<<<<<<<<<<<
  *     PyMem_Free(enc)
  * 
  */
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_output, __pyx_n_s_write); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 170, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_output, __pyx_n_s_write); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 173, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_4 = __Pyx_PyBytes_FromStringAndSize(((const char*)__pyx_v_payload) + 0, __pyx_v_n_bytes - 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 170, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyBytes_FromStringAndSize(((const char*)__pyx_v_payload) + 0, __pyx_v_n_bytes - 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 173, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __pyx_t_5 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -3607,15 +3657,15 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
     __pyx_t_3 = (__pyx_t_5) ? __Pyx_PyObject_Call2Args(__pyx_t_2, __pyx_t_5, __pyx_t_4) : __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_4);
     __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 170, __pyx_L1_error)
+    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 173, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
   __pyx_L10_break:;
 
-  /* "pysilk/_silk.pyx":171
- *         write_i16_le(output, n_bytes, le)
+  /* "pysilk/_silk.pyx":174
+ *         write_i16_le(output, n_bytes)
  *         output.write(<bytes> payload[0:n_bytes])
  *     PyMem_Free(enc)             # <<<<<<<<<<<<<<
  * 
@@ -3623,7 +3673,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_encode(PyObject *__pyx_v_input,
  */
   PyMem_Free(__pyx_v_enc);
 
-  /* "pysilk/_silk.pyx":81
+  /* "pysilk/_silk.pyx":85
  *     return 0
  * 
  * cpdef inline void encode(object input,             # <<<<<<<<<<<<<<
@@ -3708,19 +3758,19 @@ static PyObject *__pyx_pw_6pysilk_5_silk_1encode(PyObject *__pyx_self, PyObject 
         case  1:
         if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_output)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("encode", 0, 4, 10, 1); __PYX_ERR(0, 81, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("encode", 0, 4, 10, 1); __PYX_ERR(0, 85, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_sample_rate)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("encode", 0, 4, 10, 2); __PYX_ERR(0, 81, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("encode", 0, 4, 10, 2); __PYX_ERR(0, 85, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_bit_rate)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("encode", 0, 4, 10, 3); __PYX_ERR(0, 81, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("encode", 0, 4, 10, 3); __PYX_ERR(0, 85, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
@@ -3760,7 +3810,7 @@ static PyObject *__pyx_pw_6pysilk_5_silk_1encode(PyObject *__pyx_self, PyObject 
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "encode") < 0)) __PYX_ERR(0, 81, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "encode") < 0)) __PYX_ERR(0, 85, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -3786,28 +3836,28 @@ static PyObject *__pyx_pw_6pysilk_5_silk_1encode(PyObject *__pyx_self, PyObject 
     }
     __pyx_v_input = values[0];
     __pyx_v_output = values[1];
-    __pyx_v_sample_rate = __Pyx_PyInt_As_int32_t(values[2]); if (unlikely((__pyx_v_sample_rate == ((int32_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 83, __pyx_L3_error)
-    __pyx_v_bit_rate = __Pyx_PyInt_As_int32_t(values[3]); if (unlikely((__pyx_v_bit_rate == ((int32_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 84, __pyx_L3_error)
+    __pyx_v_sample_rate = __Pyx_PyInt_As_int32_t(values[2]); if (unlikely((__pyx_v_sample_rate == ((int32_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 87, __pyx_L3_error)
+    __pyx_v_bit_rate = __Pyx_PyInt_As_int32_t(values[3]); if (unlikely((__pyx_v_bit_rate == ((int32_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 88, __pyx_L3_error)
     if (values[4]) {
-      __pyx_v_max_internal_sample_rate = __Pyx_PyInt_As_int32_t(values[4]); if (unlikely((__pyx_v_max_internal_sample_rate == ((int32_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 85, __pyx_L3_error)
+      __pyx_v_max_internal_sample_rate = __Pyx_PyInt_As_int32_t(values[4]); if (unlikely((__pyx_v_max_internal_sample_rate == ((int32_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 89, __pyx_L3_error)
     } else {
       __pyx_v_max_internal_sample_rate = ((int32_t)0x5DC0);
     }
     if (values[5]) {
-      __pyx_v_packet_loss_percentage = __Pyx_PyInt_As_int32_t(values[5]); if (unlikely((__pyx_v_packet_loss_percentage == ((int32_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 86, __pyx_L3_error)
+      __pyx_v_packet_loss_percentage = __Pyx_PyInt_As_int32_t(values[5]); if (unlikely((__pyx_v_packet_loss_percentage == ((int32_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 90, __pyx_L3_error)
     } else {
       __pyx_v_packet_loss_percentage = ((int32_t)0);
     }
     if (values[6]) {
-      __pyx_v_complexity = __Pyx_PyInt_As_int32_t(values[6]); if (unlikely((__pyx_v_complexity == ((int32_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 87, __pyx_L3_error)
+      __pyx_v_complexity = __Pyx_PyInt_As_int32_t(values[6]); if (unlikely((__pyx_v_complexity == ((int32_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 91, __pyx_L3_error)
     } else {
       __pyx_v_complexity = ((int32_t)2);
     }
     if (values[7]) {
-      __pyx_v_use_inband_fec = __Pyx_PyObject_IsTrue(values[7]); if (unlikely((__pyx_v_use_inband_fec == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 88, __pyx_L3_error)
+      __pyx_v_use_inband_fec = __Pyx_PyObject_IsTrue(values[7]); if (unlikely((__pyx_v_use_inband_fec == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 92, __pyx_L3_error)
     } else {
 
-      /* "pysilk/_silk.pyx":88
+      /* "pysilk/_silk.pyx":92
  *                   int32_t packet_loss_percentage = 0,
  *                   int32_t complexity = 2,
  *                   bint use_inband_fec = False,             # <<<<<<<<<<<<<<
@@ -3817,10 +3867,10 @@ static PyObject *__pyx_pw_6pysilk_5_silk_1encode(PyObject *__pyx_self, PyObject 
       __pyx_v_use_inband_fec = ((int)0);
     }
     if (values[8]) {
-      __pyx_v_use_dtx = __Pyx_PyObject_IsTrue(values[8]); if (unlikely((__pyx_v_use_dtx == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 89, __pyx_L3_error)
+      __pyx_v_use_dtx = __Pyx_PyObject_IsTrue(values[8]); if (unlikely((__pyx_v_use_dtx == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 93, __pyx_L3_error)
     } else {
 
-      /* "pysilk/_silk.pyx":89
+      /* "pysilk/_silk.pyx":93
  *                   int32_t complexity = 2,
  *                   bint use_inband_fec = False,
  *                   bint use_dtx = False,             # <<<<<<<<<<<<<<
@@ -3830,10 +3880,10 @@ static PyObject *__pyx_pw_6pysilk_5_silk_1encode(PyObject *__pyx_self, PyObject 
       __pyx_v_use_dtx = ((int)0);
     }
     if (values[9]) {
-      __pyx_v_tencent = __Pyx_PyObject_IsTrue(values[9]); if (unlikely((__pyx_v_tencent == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 90, __pyx_L3_error)
+      __pyx_v_tencent = __Pyx_PyObject_IsTrue(values[9]); if (unlikely((__pyx_v_tencent == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 94, __pyx_L3_error)
     } else {
 
-      /* "pysilk/_silk.pyx":90
+      /* "pysilk/_silk.pyx":94
  *                   bint use_inband_fec = False,
  *                   bint use_dtx = False,
  *                   bint tencent = True) with gil:             # <<<<<<<<<<<<<<
@@ -3845,7 +3895,7 @@ static PyObject *__pyx_pw_6pysilk_5_silk_1encode(PyObject *__pyx_self, PyObject 
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("encode", 0, 4, 10, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 81, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("encode", 0, 4, 10, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 85, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("pysilk._silk.encode", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -3853,7 +3903,7 @@ static PyObject *__pyx_pw_6pysilk_5_silk_1encode(PyObject *__pyx_self, PyObject 
   __pyx_L4_argument_unpacking_done:;
   __pyx_r = __pyx_pf_6pysilk_5_silk_encode(__pyx_self, __pyx_v_input, __pyx_v_output, __pyx_v_sample_rate, __pyx_v_bit_rate, __pyx_v_max_internal_sample_rate, __pyx_v_packet_loss_percentage, __pyx_v_complexity, __pyx_v_use_inband_fec, __pyx_v_use_dtx, __pyx_v_tencent);
 
-  /* "pysilk/_silk.pyx":81
+  /* "pysilk/_silk.pyx":85
  *     return 0
  * 
  * cpdef inline void encode(object input,             # <<<<<<<<<<<<<<
@@ -3884,7 +3934,7 @@ static PyObject *__pyx_pf_6pysilk_5_silk_encode(CYTHON_UNUSED PyObject *__pyx_se
   __pyx_t_1.use_dtx = __pyx_v_use_dtx;
   __pyx_t_1.tencent = __pyx_v_tencent;
   __pyx_f_6pysilk_5_silk_encode(__pyx_v_input, __pyx_v_output, __pyx_v_sample_rate, __pyx_v_bit_rate, 0, &__pyx_t_1); 
-  __pyx_t_2 = __Pyx_void_to_None(NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 81, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_void_to_None(NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 85, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_r = __pyx_t_2;
   __pyx_t_2 = 0;
@@ -3901,7 +3951,7 @@ static PyObject *__pyx_pf_6pysilk_5_silk_encode(CYTHON_UNUSED PyObject *__pyx_se
   return __pyx_r;
 }
 
-/* "pysilk/_silk.pyx":173
+/* "pysilk/_silk.pyx":176
  *     PyMem_Free(enc)
  * 
  * cpdef inline void decode(object input,             # <<<<<<<<<<<<<<
@@ -3914,7 +3964,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
   int32_t __pyx_v_frame_size = ((int32_t)0);
   int32_t __pyx_v_frames_per_packet = ((int32_t)1);
 
-  /* "pysilk/_silk.pyx":178
+  /* "pysilk/_silk.pyx":181
  *                   int32_t frame_size=0,
  *                   int32_t frames_per_packet=1,
  *                   bint more_internal_decoder_frames=False,             # <<<<<<<<<<<<<<
@@ -3924,7 +3974,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
   int __pyx_v_more_internal_decoder_frames = ((int)0);
   int32_t __pyx_v_in_band_fec_offset = ((int32_t)0);
 
-  /* "pysilk/_silk.pyx":180
+  /* "pysilk/_silk.pyx":183
  *                   bint more_internal_decoder_frames=False,
  *                   int32_t in_band_fec_offset=0,
  *                   bint loss=False) with gil:             # <<<<<<<<<<<<<<
@@ -3934,7 +3984,6 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
   int __pyx_v_loss = ((int)0);
   PyObject *__pyx_v_chunk = NULL;
   SKP_SILK_SDK_DecControlStruct __pyx_v_dec_control;
-  uint8_t __pyx_v_le;
   int32_t __pyx_v_dec_size;
   int32_t __pyx_v_code;
   void *__pyx_v_dec;
@@ -3975,7 +4024,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
   __Pyx_INCREF(__pyx_v_input);
   __Pyx_INCREF(__pyx_v_output);
 
-  /* "pysilk/_silk.pyx":194
+  /* "pysilk/_silk.pyx":197
  *     :return:
  *     """
  *     if not PyFile_Check(input):             # <<<<<<<<<<<<<<
@@ -3985,26 +4034,26 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
   __pyx_t_1 = ((!(__pyx_f_6pysilk_5_silk_PyFile_Check(__pyx_v_input) != 0)) != 0);
   if (unlikely(__pyx_t_1)) {
 
-    /* "pysilk/_silk.pyx":195
+    /* "pysilk/_silk.pyx":198
  *     """
  *     if not PyFile_Check(input):
  *         raise TypeError("input except a file-like object, got %s" % type(input).__name__)             # <<<<<<<<<<<<<<
  *     if not PyFile_Check(output):
  *         raise TypeError("output except a file-like object, got %s" % type(output).__name__)
  */
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)Py_TYPE(__pyx_v_input)), __pyx_n_s_name); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 195, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)Py_TYPE(__pyx_v_input)), __pyx_n_s_name); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 198, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = __Pyx_PyUnicode_FormatSafe(__pyx_kp_u_input_except_a_file_like_object, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 195, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyUnicode_FormatSafe(__pyx_kp_u_input_except_a_file_like_object, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 198, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_builtin_TypeError, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 195, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_builtin_TypeError, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 198, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_Raise(__pyx_t_2, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __PYX_ERR(0, 195, __pyx_L1_error)
+    __PYX_ERR(0, 198, __pyx_L1_error)
 
-    /* "pysilk/_silk.pyx":194
+    /* "pysilk/_silk.pyx":197
  *     :return:
  *     """
  *     if not PyFile_Check(input):             # <<<<<<<<<<<<<<
@@ -4013,7 +4062,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
   }
 
-  /* "pysilk/_silk.pyx":196
+  /* "pysilk/_silk.pyx":199
  *     if not PyFile_Check(input):
  *         raise TypeError("input except a file-like object, got %s" % type(input).__name__)
  *     if not PyFile_Check(output):             # <<<<<<<<<<<<<<
@@ -4023,26 +4072,26 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
   __pyx_t_1 = ((!(__pyx_f_6pysilk_5_silk_PyFile_Check(__pyx_v_output) != 0)) != 0);
   if (unlikely(__pyx_t_1)) {
 
-    /* "pysilk/_silk.pyx":197
+    /* "pysilk/_silk.pyx":200
  *         raise TypeError("input except a file-like object, got %s" % type(input).__name__)
  *     if not PyFile_Check(output):
  *         raise TypeError("output except a file-like object, got %s" % type(output).__name__)             # <<<<<<<<<<<<<<
  * 
  *     chunk = input.read(9)  # type: bytes
  */
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)Py_TYPE(__pyx_v_output)), __pyx_n_s_name); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 197, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)Py_TYPE(__pyx_v_output)), __pyx_n_s_name); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 200, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = __Pyx_PyUnicode_FormatSafe(__pyx_kp_u_output_except_a_file_like_object, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 197, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyUnicode_FormatSafe(__pyx_kp_u_output_except_a_file_like_object, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 200, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_builtin_TypeError, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 197, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_builtin_TypeError, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 200, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_Raise(__pyx_t_2, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __PYX_ERR(0, 197, __pyx_L1_error)
+    __PYX_ERR(0, 200, __pyx_L1_error)
 
-    /* "pysilk/_silk.pyx":196
+    /* "pysilk/_silk.pyx":199
  *     if not PyFile_Check(input):
  *         raise TypeError("input except a file-like object, got %s" % type(input).__name__)
  *     if not PyFile_Check(output):             # <<<<<<<<<<<<<<
@@ -4051,14 +4100,14 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
   }
 
-  /* "pysilk/_silk.pyx":199
+  /* "pysilk/_silk.pyx":202
  *         raise TypeError("output except a file-like object, got %s" % type(output).__name__)
  * 
  *     chunk = input.read(9)  # type: bytes             # <<<<<<<<<<<<<<
  *     if not PyBytes_Check(chunk):
  *         raise TypeError(f"input must be a file-like rb object, got {type(input).__name__}")
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_input, __pyx_n_s_read); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 199, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_input, __pyx_n_s_read); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 202, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_4 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
@@ -4072,13 +4121,13 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
   }
   __pyx_t_2 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_3, __pyx_t_4, __pyx_int_9) : __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_int_9);
   __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 199, __pyx_L1_error)
+  if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 202, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_v_chunk = __pyx_t_2;
   __pyx_t_2 = 0;
 
-  /* "pysilk/_silk.pyx":200
+  /* "pysilk/_silk.pyx":203
  * 
  *     chunk = input.read(9)  # type: bytes
  *     if not PyBytes_Check(chunk):             # <<<<<<<<<<<<<<
@@ -4088,29 +4137,29 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
   __pyx_t_1 = ((!(PyBytes_Check(__pyx_v_chunk) != 0)) != 0);
   if (unlikely(__pyx_t_1)) {
 
-    /* "pysilk/_silk.pyx":201
+    /* "pysilk/_silk.pyx":204
  *     chunk = input.read(9)  # type: bytes
  *     if not PyBytes_Check(chunk):
  *         raise TypeError(f"input must be a file-like rb object, got {type(input).__name__}")             # <<<<<<<<<<<<<<
  *     if chunk != b"#!SILK_V3" and chunk != b"\x02#!SILK_V":
  *         raise SilkError("INVALID")
  */
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)Py_TYPE(__pyx_v_input)), __pyx_n_s_name); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 201, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)Py_TYPE(__pyx_v_input)), __pyx_n_s_name); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 204, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = __Pyx_PyObject_FormatSimple(__pyx_t_2, __pyx_empty_unicode); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 201, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_FormatSimple(__pyx_t_2, __pyx_empty_unicode); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 204, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyUnicode_Concat(__pyx_kp_u_input_must_be_a_file_like_rb_obj, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 201, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyUnicode_Concat(__pyx_kp_u_input_must_be_a_file_like_rb_obj, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 204, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_builtin_TypeError, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 201, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_builtin_TypeError, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 204, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_Raise(__pyx_t_3, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __PYX_ERR(0, 201, __pyx_L1_error)
+    __PYX_ERR(0, 204, __pyx_L1_error)
 
-    /* "pysilk/_silk.pyx":200
+    /* "pysilk/_silk.pyx":203
  * 
  *     chunk = input.read(9)  # type: bytes
  *     if not PyBytes_Check(chunk):             # <<<<<<<<<<<<<<
@@ -4119,32 +4168,32 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
   }
 
-  /* "pysilk/_silk.pyx":202
+  /* "pysilk/_silk.pyx":205
  *     if not PyBytes_Check(chunk):
  *         raise TypeError(f"input must be a file-like rb object, got {type(input).__name__}")
  *     if chunk != b"#!SILK_V3" and chunk != b"\x02#!SILK_V":             # <<<<<<<<<<<<<<
  *         raise SilkError("INVALID")
  *     elif chunk == b"\x02#!SILK_V":
  */
-  __pyx_t_5 = (__Pyx_PyBytes_Equals(__pyx_v_chunk, __pyx_kp_b_SILK_V3_2, Py_NE)); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 202, __pyx_L1_error)
+  __pyx_t_5 = (__Pyx_PyBytes_Equals(__pyx_v_chunk, __pyx_kp_b_SILK_V3_2, Py_NE)); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 205, __pyx_L1_error)
   if (__pyx_t_5) {
   } else {
     __pyx_t_1 = __pyx_t_5;
     goto __pyx_L7_bool_binop_done;
   }
-  __pyx_t_5 = (__Pyx_PyBytes_Equals(__pyx_v_chunk, __pyx_kp_b_SILK_V, Py_NE)); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 202, __pyx_L1_error)
+  __pyx_t_5 = (__Pyx_PyBytes_Equals(__pyx_v_chunk, __pyx_kp_b_SILK_V, Py_NE)); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 205, __pyx_L1_error)
   __pyx_t_1 = __pyx_t_5;
   __pyx_L7_bool_binop_done:;
   if (unlikely(__pyx_t_1)) {
 
-    /* "pysilk/_silk.pyx":203
+    /* "pysilk/_silk.pyx":206
  *         raise TypeError(f"input must be a file-like rb object, got {type(input).__name__}")
  *     if chunk != b"#!SILK_V3" and chunk != b"\x02#!SILK_V":
  *         raise SilkError("INVALID")             # <<<<<<<<<<<<<<
  *     elif chunk == b"\x02#!SILK_V":
  *         chunk = input.read(1)
  */
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_SilkError); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 203, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_SilkError); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 206, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_t_4 = NULL;
     if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_2))) {
@@ -4158,14 +4207,14 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
     }
     __pyx_t_3 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_2, __pyx_t_4, __pyx_n_u_INVALID) : __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_n_u_INVALID);
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 203, __pyx_L1_error)
+    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 206, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_Raise(__pyx_t_3, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __PYX_ERR(0, 203, __pyx_L1_error)
+    __PYX_ERR(0, 206, __pyx_L1_error)
 
-    /* "pysilk/_silk.pyx":202
+    /* "pysilk/_silk.pyx":205
  *     if not PyBytes_Check(chunk):
  *         raise TypeError(f"input must be a file-like rb object, got {type(input).__name__}")
  *     if chunk != b"#!SILK_V3" and chunk != b"\x02#!SILK_V":             # <<<<<<<<<<<<<<
@@ -4174,24 +4223,24 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
   }
 
-  /* "pysilk/_silk.pyx":204
+  /* "pysilk/_silk.pyx":207
  *     if chunk != b"#!SILK_V3" and chunk != b"\x02#!SILK_V":
  *         raise SilkError("INVALID")
  *     elif chunk == b"\x02#!SILK_V":             # <<<<<<<<<<<<<<
  *         chunk = input.read(1)
  *         if chunk != b"3":
  */
-  __pyx_t_1 = (__Pyx_PyBytes_Equals(__pyx_v_chunk, __pyx_kp_b_SILK_V, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 204, __pyx_L1_error)
+  __pyx_t_1 = (__Pyx_PyBytes_Equals(__pyx_v_chunk, __pyx_kp_b_SILK_V, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 207, __pyx_L1_error)
   if (__pyx_t_1) {
 
-    /* "pysilk/_silk.pyx":205
+    /* "pysilk/_silk.pyx":208
  *         raise SilkError("INVALID")
  *     elif chunk == b"\x02#!SILK_V":
  *         chunk = input.read(1)             # <<<<<<<<<<<<<<
  *         if chunk != b"3":
  *             raise SilkError("INVALID")
  */
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_input, __pyx_n_s_read); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 205, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_input, __pyx_n_s_read); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 208, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_t_4 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -4205,30 +4254,30 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
     }
     __pyx_t_3 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_2, __pyx_t_4, __pyx_int_1) : __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_int_1);
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 205, __pyx_L1_error)
+    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 208, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF_SET(__pyx_v_chunk, __pyx_t_3);
     __pyx_t_3 = 0;
 
-    /* "pysilk/_silk.pyx":206
+    /* "pysilk/_silk.pyx":209
  *     elif chunk == b"\x02#!SILK_V":
  *         chunk = input.read(1)
  *         if chunk != b"3":             # <<<<<<<<<<<<<<
  *             raise SilkError("INVALID")
  * 
  */
-    __pyx_t_1 = (__Pyx_PyBytes_Equals(__pyx_v_chunk, __pyx_kp_b_3, Py_NE)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 206, __pyx_L1_error)
+    __pyx_t_1 = (__Pyx_PyBytes_Equals(__pyx_v_chunk, __pyx_kp_b_3, Py_NE)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 209, __pyx_L1_error)
     if (unlikely(__pyx_t_1)) {
 
-      /* "pysilk/_silk.pyx":207
+      /* "pysilk/_silk.pyx":210
  *         chunk = input.read(1)
  *         if chunk != b"3":
  *             raise SilkError("INVALID")             # <<<<<<<<<<<<<<
  * 
  *     cdef SKP_SILK_SDK_DecControlStruct dec_control
  */
-      __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_SilkError); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 207, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_SilkError); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 210, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __pyx_t_4 = NULL;
       if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_2))) {
@@ -4242,14 +4291,14 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
       }
       __pyx_t_3 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_2, __pyx_t_4, __pyx_n_u_INVALID) : __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_n_u_INVALID);
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 207, __pyx_L1_error)
+      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 210, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __Pyx_Raise(__pyx_t_3, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __PYX_ERR(0, 207, __pyx_L1_error)
+      __PYX_ERR(0, 210, __pyx_L1_error)
 
-      /* "pysilk/_silk.pyx":206
+      /* "pysilk/_silk.pyx":209
  *     elif chunk == b"\x02#!SILK_V":
  *         chunk = input.read(1)
  *         if chunk != b"3":             # <<<<<<<<<<<<<<
@@ -4258,7 +4307,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
     }
 
-    /* "pysilk/_silk.pyx":204
+    /* "pysilk/_silk.pyx":207
  *     if chunk != b"#!SILK_V3" and chunk != b"\x02#!SILK_V":
  *         raise SilkError("INVALID")
  *     elif chunk == b"\x02#!SILK_V":             # <<<<<<<<<<<<<<
@@ -4267,7 +4316,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
   }
 
-  /* "pysilk/_silk.pyx":210
+  /* "pysilk/_silk.pyx":213
  * 
  *     cdef SKP_SILK_SDK_DecControlStruct dec_control
  *     dec_control.API_sampleRate = sample_rate             # <<<<<<<<<<<<<<
@@ -4276,7 +4325,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
   __pyx_v_dec_control.API_sampleRate = __pyx_v_sample_rate;
 
-  /* "pysilk/_silk.pyx":211
+  /* "pysilk/_silk.pyx":214
  *     cdef SKP_SILK_SDK_DecControlStruct dec_control
  *     dec_control.API_sampleRate = sample_rate
  *     dec_control.frameSize = frame_size             # <<<<<<<<<<<<<<
@@ -4285,7 +4334,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
   __pyx_v_dec_control.frameSize = __pyx_v_frame_size;
 
-  /* "pysilk/_silk.pyx":212
+  /* "pysilk/_silk.pyx":215
  *     dec_control.API_sampleRate = sample_rate
  *     dec_control.frameSize = frame_size
  *     dec_control.framesPerPacket = frames_per_packet             # <<<<<<<<<<<<<<
@@ -4294,44 +4343,35 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
   __pyx_v_dec_control.framesPerPacket = __pyx_v_frames_per_packet;
 
-  /* "pysilk/_silk.pyx":213
+  /* "pysilk/_silk.pyx":216
  *     dec_control.frameSize = frame_size
  *     dec_control.framesPerPacket = frames_per_packet
  *     dec_control.moreInternalDecoderFrames = more_internal_decoder_frames             # <<<<<<<<<<<<<<
  *     dec_control.inBandFECOffset = in_band_fec_offset
- *     cdef uint8_t le = is_le()  # is little endian
+ *     cdef int32_t dec_size = 0
  */
   __pyx_v_dec_control.moreInternalDecoderFrames = __pyx_v_more_internal_decoder_frames;
 
-  /* "pysilk/_silk.pyx":214
+  /* "pysilk/_silk.pyx":217
  *     dec_control.framesPerPacket = frames_per_packet
  *     dec_control.moreInternalDecoderFrames = more_internal_decoder_frames
  *     dec_control.inBandFECOffset = in_band_fec_offset             # <<<<<<<<<<<<<<
- *     cdef uint8_t le = is_le()  # is little endian
- *     cdef int32_t dec_size = 0
- */
-  __pyx_v_dec_control.inBandFECOffset = __pyx_v_in_band_fec_offset;
-
-  /* "pysilk/_silk.pyx":215
- *     dec_control.moreInternalDecoderFrames = more_internal_decoder_frames
- *     dec_control.inBandFECOffset = in_band_fec_offset
- *     cdef uint8_t le = is_le()  # is little endian             # <<<<<<<<<<<<<<
  *     cdef int32_t dec_size = 0
  *     cdef int32_t code = SKP_Silk_SDK_Get_Decoder_Size(&dec_size)
  */
-  __pyx_v_le = is_le();
+  __pyx_v_dec_control.inBandFECOffset = __pyx_v_in_band_fec_offset;
 
-  /* "pysilk/_silk.pyx":216
+  /* "pysilk/_silk.pyx":218
+ *     dec_control.moreInternalDecoderFrames = more_internal_decoder_frames
  *     dec_control.inBandFECOffset = in_band_fec_offset
- *     cdef uint8_t le = is_le()  # is little endian
  *     cdef int32_t dec_size = 0             # <<<<<<<<<<<<<<
  *     cdef int32_t code = SKP_Silk_SDK_Get_Decoder_Size(&dec_size)
  *     if code != 0:
  */
   __pyx_v_dec_size = 0;
 
-  /* "pysilk/_silk.pyx":217
- *     cdef uint8_t le = is_le()  # is little endian
+  /* "pysilk/_silk.pyx":219
+ *     dec_control.inBandFECOffset = in_band_fec_offset
  *     cdef int32_t dec_size = 0
  *     cdef int32_t code = SKP_Silk_SDK_Get_Decoder_Size(&dec_size)             # <<<<<<<<<<<<<<
  *     if code != 0:
@@ -4339,7 +4379,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
   __pyx_v_code = SKP_Silk_SDK_Get_Decoder_Size((&__pyx_v_dec_size));
 
-  /* "pysilk/_silk.pyx":218
+  /* "pysilk/_silk.pyx":220
  *     cdef int32_t dec_size = 0
  *     cdef int32_t code = SKP_Silk_SDK_Get_Decoder_Size(&dec_size)
  *     if code != 0:             # <<<<<<<<<<<<<<
@@ -4349,16 +4389,16 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
   __pyx_t_1 = ((__pyx_v_code != 0) != 0);
   if (unlikely(__pyx_t_1)) {
 
-    /* "pysilk/_silk.pyx":219
+    /* "pysilk/_silk.pyx":221
  *     cdef int32_t code = SKP_Silk_SDK_Get_Decoder_Size(&dec_size)
  *     if code != 0:
  *         raise SilkError(code)             # <<<<<<<<<<<<<<
  *     cdef void *dec = PyMem_Malloc(dec_size)
  *     if dec == NULL:
  */
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_SilkError); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 219, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_SilkError); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 221, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_4 = __Pyx_PyInt_From_int32_t(__pyx_v_code); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 219, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyInt_From_int32_t(__pyx_v_code); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 221, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __pyx_t_6 = NULL;
     if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_2))) {
@@ -4373,14 +4413,14 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
     __pyx_t_3 = (__pyx_t_6) ? __Pyx_PyObject_Call2Args(__pyx_t_2, __pyx_t_6, __pyx_t_4) : __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_4);
     __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 219, __pyx_L1_error)
+    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 221, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_Raise(__pyx_t_3, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __PYX_ERR(0, 219, __pyx_L1_error)
+    __PYX_ERR(0, 221, __pyx_L1_error)
 
-    /* "pysilk/_silk.pyx":218
+    /* "pysilk/_silk.pyx":220
  *     cdef int32_t dec_size = 0
  *     cdef int32_t code = SKP_Silk_SDK_Get_Decoder_Size(&dec_size)
  *     if code != 0:             # <<<<<<<<<<<<<<
@@ -4389,7 +4429,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
   }
 
-  /* "pysilk/_silk.pyx":220
+  /* "pysilk/_silk.pyx":222
  *     if code != 0:
  *         raise SilkError(code)
  *     cdef void *dec = PyMem_Malloc(dec_size)             # <<<<<<<<<<<<<<
@@ -4398,7 +4438,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
   __pyx_v_dec = PyMem_Malloc(__pyx_v_dec_size);
 
-  /* "pysilk/_silk.pyx":221
+  /* "pysilk/_silk.pyx":223
  *         raise SilkError(code)
  *     cdef void *dec = PyMem_Malloc(dec_size)
  *     if dec == NULL:             # <<<<<<<<<<<<<<
@@ -4408,16 +4448,16 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
   __pyx_t_1 = ((__pyx_v_dec == NULL) != 0);
   if (unlikely(__pyx_t_1)) {
 
-    /* "pysilk/_silk.pyx":222
+    /* "pysilk/_silk.pyx":224
  *     cdef void *dec = PyMem_Malloc(dec_size)
  *     if dec == NULL:
  *         raise MemoryError             # <<<<<<<<<<<<<<
  *     code = SKP_Silk_SDK_InitDecoder(dec)
  *     if code != 0:
  */
-    PyErr_NoMemory(); __PYX_ERR(0, 222, __pyx_L1_error)
+    PyErr_NoMemory(); __PYX_ERR(0, 224, __pyx_L1_error)
 
-    /* "pysilk/_silk.pyx":221
+    /* "pysilk/_silk.pyx":223
  *         raise SilkError(code)
  *     cdef void *dec = PyMem_Malloc(dec_size)
  *     if dec == NULL:             # <<<<<<<<<<<<<<
@@ -4426,7 +4466,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
   }
 
-  /* "pysilk/_silk.pyx":223
+  /* "pysilk/_silk.pyx":225
  *     if dec == NULL:
  *         raise MemoryError
  *     code = SKP_Silk_SDK_InitDecoder(dec)             # <<<<<<<<<<<<<<
@@ -4435,7 +4475,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
   __pyx_v_code = SKP_Silk_SDK_InitDecoder(__pyx_v_dec);
 
-  /* "pysilk/_silk.pyx":224
+  /* "pysilk/_silk.pyx":226
  *         raise MemoryError
  *     code = SKP_Silk_SDK_InitDecoder(dec)
  *     if code != 0:             # <<<<<<<<<<<<<<
@@ -4445,7 +4485,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
   __pyx_t_1 = ((__pyx_v_code != 0) != 0);
   if (unlikely(__pyx_t_1)) {
 
-    /* "pysilk/_silk.pyx":225
+    /* "pysilk/_silk.pyx":227
  *     code = SKP_Silk_SDK_InitDecoder(dec)
  *     if code != 0:
  *         PyMem_Free(dec)             # <<<<<<<<<<<<<<
@@ -4454,16 +4494,16 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
     PyMem_Free(__pyx_v_dec);
 
-    /* "pysilk/_silk.pyx":226
+    /* "pysilk/_silk.pyx":228
  *     if code != 0:
  *         PyMem_Free(dec)
  *         raise SilkError(code)             # <<<<<<<<<<<<<<
  *     frame_size = sample_rate / 1000 * 40;
  *     # cdef uint8_t buf[frame_size]  # otherwise need malloc
  */
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_SilkError); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 226, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_SilkError); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 228, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_4 = __Pyx_PyInt_From_int32_t(__pyx_v_code); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 226, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyInt_From_int32_t(__pyx_v_code); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 228, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __pyx_t_6 = NULL;
     if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_2))) {
@@ -4478,14 +4518,14 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
     __pyx_t_3 = (__pyx_t_6) ? __Pyx_PyObject_Call2Args(__pyx_t_2, __pyx_t_6, __pyx_t_4) : __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_4);
     __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 226, __pyx_L1_error)
+    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 228, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_Raise(__pyx_t_3, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __PYX_ERR(0, 226, __pyx_L1_error)
+    __PYX_ERR(0, 228, __pyx_L1_error)
 
-    /* "pysilk/_silk.pyx":224
+    /* "pysilk/_silk.pyx":226
  *         raise MemoryError
  *     code = SKP_Silk_SDK_InitDecoder(dec)
  *     if code != 0:             # <<<<<<<<<<<<<<
@@ -4494,7 +4534,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
   }
 
-  /* "pysilk/_silk.pyx":227
+  /* "pysilk/_silk.pyx":229
  *         PyMem_Free(dec)
  *         raise SilkError(code)
  *     frame_size = sample_rate / 1000 * 40;             # <<<<<<<<<<<<<<
@@ -4503,7 +4543,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
   __pyx_v_frame_size = ((((long)__pyx_v_sample_rate) / 0x3E8) * 40);
 
-  /* "pysilk/_silk.pyx":229
+  /* "pysilk/_silk.pyx":231
  *     frame_size = sample_rate / 1000 * 40;
  *     # cdef uint8_t buf[frame_size]  # otherwise need malloc
  *     cdef uint8_t *buf = <uint8_t *> PyMem_Malloc(frame_size)             # <<<<<<<<<<<<<<
@@ -4512,7 +4552,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
   __pyx_v_buf = ((uint8_t *)PyMem_Malloc(__pyx_v_frame_size));
 
-  /* "pysilk/_silk.pyx":230
+  /* "pysilk/_silk.pyx":232
  *     # cdef uint8_t buf[frame_size]  # otherwise need malloc
  *     cdef uint8_t *buf = <uint8_t *> PyMem_Malloc(frame_size)
  *     if buf == NULL:             # <<<<<<<<<<<<<<
@@ -4522,7 +4562,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
   __pyx_t_1 = ((__pyx_v_buf == NULL) != 0);
   if (unlikely(__pyx_t_1)) {
 
-    /* "pysilk/_silk.pyx":231
+    /* "pysilk/_silk.pyx":233
  *     cdef uint8_t *buf = <uint8_t *> PyMem_Malloc(frame_size)
  *     if buf == NULL:
  *         PyMem_Free(dec)             # <<<<<<<<<<<<<<
@@ -4531,16 +4571,16 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
     PyMem_Free(__pyx_v_dec);
 
-    /* "pysilk/_silk.pyx":232
+    /* "pysilk/_silk.pyx":234
  *     if buf == NULL:
  *         PyMem_Free(dec)
  *         raise MemoryError             # <<<<<<<<<<<<<<
  *     cdef int16_t n_bytes
  *     while True:
  */
-    PyErr_NoMemory(); __PYX_ERR(0, 232, __pyx_L1_error)
+    PyErr_NoMemory(); __PYX_ERR(0, 234, __pyx_L1_error)
 
-    /* "pysilk/_silk.pyx":230
+    /* "pysilk/_silk.pyx":232
  *     # cdef uint8_t buf[frame_size]  # otherwise need malloc
  *     cdef uint8_t *buf = <uint8_t *> PyMem_Malloc(frame_size)
  *     if buf == NULL:             # <<<<<<<<<<<<<<
@@ -4549,7 +4589,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
   }
 
-  /* "pysilk/_silk.pyx":234
+  /* "pysilk/_silk.pyx":236
  *         raise MemoryError
  *     cdef int16_t n_bytes
  *     while True:             # <<<<<<<<<<<<<<
@@ -4558,14 +4598,14 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
   while (1) {
 
-    /* "pysilk/_silk.pyx":235
+    /* "pysilk/_silk.pyx":237
  *     cdef int16_t n_bytes
  *     while True:
  *         chunk = input.read(2)             # <<<<<<<<<<<<<<
  *         if PyBytes_Size(chunk) < 2:
  *             break
  */
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_input, __pyx_n_s_read); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 235, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_input, __pyx_n_s_read); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 237, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_t_4 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -4579,33 +4619,33 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
     }
     __pyx_t_3 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_2, __pyx_t_4, __pyx_int_2) : __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_int_2);
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 235, __pyx_L1_error)
+    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 237, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF_SET(__pyx_v_chunk, __pyx_t_3);
     __pyx_t_3 = 0;
 
-    /* "pysilk/_silk.pyx":236
+    /* "pysilk/_silk.pyx":238
  *     while True:
  *         chunk = input.read(2)
  *         if PyBytes_Size(chunk) < 2:             # <<<<<<<<<<<<<<
  *             break
  *         n_bytes = bytes_to_i16(chunk)
  */
-    __pyx_t_7 = PyBytes_Size(__pyx_v_chunk); if (unlikely(__pyx_t_7 == ((Py_ssize_t)-1L))) __PYX_ERR(0, 236, __pyx_L1_error)
+    __pyx_t_7 = PyBytes_Size(__pyx_v_chunk); if (unlikely(__pyx_t_7 == ((Py_ssize_t)-1L))) __PYX_ERR(0, 238, __pyx_L1_error)
     __pyx_t_1 = ((__pyx_t_7 < 2) != 0);
     if (__pyx_t_1) {
 
-      /* "pysilk/_silk.pyx":237
+      /* "pysilk/_silk.pyx":239
  *         chunk = input.read(2)
  *         if PyBytes_Size(chunk) < 2:
  *             break             # <<<<<<<<<<<<<<
  *         n_bytes = bytes_to_i16(chunk)
- *         if not le:
+ *         if SHOULD_SWAP:
  */
       goto __pyx_L15_break;
 
-      /* "pysilk/_silk.pyx":236
+      /* "pysilk/_silk.pyx":238
  *     while True:
  *         chunk = input.read(2)
  *         if PyBytes_Size(chunk) < 2:             # <<<<<<<<<<<<<<
@@ -4614,47 +4654,47 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
     }
 
-    /* "pysilk/_silk.pyx":238
+    /* "pysilk/_silk.pyx":240
  *         if PyBytes_Size(chunk) < 2:
  *             break
  *         n_bytes = bytes_to_i16(chunk)             # <<<<<<<<<<<<<<
- *         if not le:
- *             swap_i16(&n_bytes)
+ *         if SHOULD_SWAP:
+ *             n_bytes = swap_i16(n_bytes)
  */
-    if (!(likely(PyBytes_CheckExact(__pyx_v_chunk))||((__pyx_v_chunk) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_v_chunk)->tp_name), 0))) __PYX_ERR(0, 238, __pyx_L1_error)
+    if (!(likely(PyBytes_CheckExact(__pyx_v_chunk))||((__pyx_v_chunk) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_v_chunk)->tp_name), 0))) __PYX_ERR(0, 240, __pyx_L1_error)
     __pyx_v_n_bytes = __pyx_f_6pysilk_5_silk_bytes_to_i16(((PyObject*)__pyx_v_chunk));
 
-    /* "pysilk/_silk.pyx":239
+    /* "pysilk/_silk.pyx":241
  *             break
  *         n_bytes = bytes_to_i16(chunk)
- *         if not le:             # <<<<<<<<<<<<<<
- *             swap_i16(&n_bytes)
+ *         if SHOULD_SWAP:             # <<<<<<<<<<<<<<
+ *             n_bytes = swap_i16(n_bytes)
  *         if n_bytes > <int16_t> frame_size:
  */
-    __pyx_t_1 = ((!(__pyx_v_le != 0)) != 0);
+    __pyx_t_1 = (SHOULD_SWAP != 0);
     if (__pyx_t_1) {
 
-      /* "pysilk/_silk.pyx":240
+      /* "pysilk/_silk.pyx":242
  *         n_bytes = bytes_to_i16(chunk)
- *         if not le:
- *             swap_i16(&n_bytes)             # <<<<<<<<<<<<<<
+ *         if SHOULD_SWAP:
+ *             n_bytes = swap_i16(n_bytes)             # <<<<<<<<<<<<<<
  *         if n_bytes > <int16_t> frame_size:
  *             PyMem_Free(buf)
  */
-      swap_i16((&__pyx_v_n_bytes));
+      __pyx_v_n_bytes = swap_i16(__pyx_v_n_bytes);
 
-      /* "pysilk/_silk.pyx":239
+      /* "pysilk/_silk.pyx":241
  *             break
  *         n_bytes = bytes_to_i16(chunk)
- *         if not le:             # <<<<<<<<<<<<<<
- *             swap_i16(&n_bytes)
+ *         if SHOULD_SWAP:             # <<<<<<<<<<<<<<
+ *             n_bytes = swap_i16(n_bytes)
  *         if n_bytes > <int16_t> frame_size:
  */
     }
 
-    /* "pysilk/_silk.pyx":241
- *         if not le:
- *             swap_i16(&n_bytes)
+    /* "pysilk/_silk.pyx":243
+ *         if SHOULD_SWAP:
+ *             n_bytes = swap_i16(n_bytes)
  *         if n_bytes > <int16_t> frame_size:             # <<<<<<<<<<<<<<
  *             PyMem_Free(buf)
  *             PyMem_Free(dec)
@@ -4662,8 +4702,8 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
     __pyx_t_1 = ((__pyx_v_n_bytes > ((int16_t)__pyx_v_frame_size)) != 0);
     if (unlikely(__pyx_t_1)) {
 
-      /* "pysilk/_silk.pyx":242
- *             swap_i16(&n_bytes)
+      /* "pysilk/_silk.pyx":244
+ *             n_bytes = swap_i16(n_bytes)
  *         if n_bytes > <int16_t> frame_size:
  *             PyMem_Free(buf)             # <<<<<<<<<<<<<<
  *             PyMem_Free(dec)
@@ -4671,7 +4711,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
       PyMem_Free(__pyx_v_buf);
 
-      /* "pysilk/_silk.pyx":243
+      /* "pysilk/_silk.pyx":245
  *         if n_bytes > <int16_t> frame_size:
  *             PyMem_Free(buf)
  *             PyMem_Free(dec)             # <<<<<<<<<<<<<<
@@ -4680,14 +4720,14 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
       PyMem_Free(__pyx_v_dec);
 
-      /* "pysilk/_silk.pyx":244
+      /* "pysilk/_silk.pyx":246
  *             PyMem_Free(buf)
  *             PyMem_Free(dec)
  *             raise SilkError("INVALID")             # <<<<<<<<<<<<<<
  *         chunk = input.read(n_bytes)  # type: bytes
  *         if <int16_t> PyBytes_Size(chunk) < n_bytes:  # not enough data
  */
-      __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_SilkError); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 244, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_SilkError); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 246, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __pyx_t_4 = NULL;
       if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_2))) {
@@ -4701,32 +4741,32 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
       }
       __pyx_t_3 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_2, __pyx_t_4, __pyx_n_u_INVALID) : __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_n_u_INVALID);
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 244, __pyx_L1_error)
+      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 246, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __Pyx_Raise(__pyx_t_3, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __PYX_ERR(0, 244, __pyx_L1_error)
+      __PYX_ERR(0, 246, __pyx_L1_error)
 
-      /* "pysilk/_silk.pyx":241
- *         if not le:
- *             swap_i16(&n_bytes)
+      /* "pysilk/_silk.pyx":243
+ *         if SHOULD_SWAP:
+ *             n_bytes = swap_i16(n_bytes)
  *         if n_bytes > <int16_t> frame_size:             # <<<<<<<<<<<<<<
  *             PyMem_Free(buf)
  *             PyMem_Free(dec)
  */
     }
 
-    /* "pysilk/_silk.pyx":245
+    /* "pysilk/_silk.pyx":247
  *             PyMem_Free(dec)
  *             raise SilkError("INVALID")
  *         chunk = input.read(n_bytes)  # type: bytes             # <<<<<<<<<<<<<<
  *         if <int16_t> PyBytes_Size(chunk) < n_bytes:  # not enough data
  *             PyMem_Free(buf)
  */
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_input, __pyx_n_s_read); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 245, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_input, __pyx_n_s_read); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 247, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_4 = __Pyx_PyInt_From_int16_t(__pyx_v_n_bytes); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 245, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyInt_From_int16_t(__pyx_v_n_bytes); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 247, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __pyx_t_6 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -4741,24 +4781,24 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
     __pyx_t_3 = (__pyx_t_6) ? __Pyx_PyObject_Call2Args(__pyx_t_2, __pyx_t_6, __pyx_t_4) : __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_4);
     __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 245, __pyx_L1_error)
+    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 247, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF_SET(__pyx_v_chunk, __pyx_t_3);
     __pyx_t_3 = 0;
 
-    /* "pysilk/_silk.pyx":246
+    /* "pysilk/_silk.pyx":248
  *             raise SilkError("INVALID")
  *         chunk = input.read(n_bytes)  # type: bytes
  *         if <int16_t> PyBytes_Size(chunk) < n_bytes:  # not enough data             # <<<<<<<<<<<<<<
  *             PyMem_Free(buf)
  *             PyMem_Free(dec)
  */
-    __pyx_t_7 = PyBytes_Size(__pyx_v_chunk); if (unlikely(__pyx_t_7 == ((Py_ssize_t)-1L))) __PYX_ERR(0, 246, __pyx_L1_error)
+    __pyx_t_7 = PyBytes_Size(__pyx_v_chunk); if (unlikely(__pyx_t_7 == ((Py_ssize_t)-1L))) __PYX_ERR(0, 248, __pyx_L1_error)
     __pyx_t_1 = ((((int16_t)__pyx_t_7) < __pyx_v_n_bytes) != 0);
     if (unlikely(__pyx_t_1)) {
 
-      /* "pysilk/_silk.pyx":247
+      /* "pysilk/_silk.pyx":249
  *         chunk = input.read(n_bytes)  # type: bytes
  *         if <int16_t> PyBytes_Size(chunk) < n_bytes:  # not enough data
  *             PyMem_Free(buf)             # <<<<<<<<<<<<<<
@@ -4767,7 +4807,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
       PyMem_Free(__pyx_v_buf);
 
-      /* "pysilk/_silk.pyx":248
+      /* "pysilk/_silk.pyx":250
  *         if <int16_t> PyBytes_Size(chunk) < n_bytes:  # not enough data
  *             PyMem_Free(buf)
  *             PyMem_Free(dec)             # <<<<<<<<<<<<<<
@@ -4776,14 +4816,14 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
       PyMem_Free(__pyx_v_dec);
 
-      /* "pysilk/_silk.pyx":249
+      /* "pysilk/_silk.pyx":251
  *             PyMem_Free(buf)
  *             PyMem_Free(dec)
  *             raise SilkError("INVALID")             # <<<<<<<<<<<<<<
  *         code = SKP_Silk_SDK_Decode(dec,
  *                                    &dec_control,
  */
-      __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_SilkError); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 249, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_SilkError); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 251, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __pyx_t_4 = NULL;
       if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_2))) {
@@ -4797,14 +4837,14 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
       }
       __pyx_t_3 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_2, __pyx_t_4, __pyx_n_u_INVALID) : __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_n_u_INVALID);
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 249, __pyx_L1_error)
+      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 251, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __Pyx_Raise(__pyx_t_3, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __PYX_ERR(0, 249, __pyx_L1_error)
+      __PYX_ERR(0, 251, __pyx_L1_error)
 
-      /* "pysilk/_silk.pyx":246
+      /* "pysilk/_silk.pyx":248
  *             raise SilkError("INVALID")
  *         chunk = input.read(n_bytes)  # type: bytes
  *         if <int16_t> PyBytes_Size(chunk) < n_bytes:  # not enough data             # <<<<<<<<<<<<<<
@@ -4813,7 +4853,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
     }
 
-    /* "pysilk/_silk.pyx":250
+    /* "pysilk/_silk.pyx":252
  *             PyMem_Free(dec)
  *             raise SilkError("INVALID")
  *         code = SKP_Silk_SDK_Decode(dec,             # <<<<<<<<<<<<<<
@@ -4822,7 +4862,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
     __pyx_v_code = SKP_Silk_SDK_Decode(__pyx_v_dec, (&__pyx_v_dec_control), __pyx_v_loss, ((uint8_t const *)PyBytes_AS_STRING(__pyx_v_chunk)), ((int32_t const )__pyx_v_n_bytes), ((int16_t *)__pyx_v_buf), (&__pyx_v_n_bytes));
 
-    /* "pysilk/_silk.pyx":257
+    /* "pysilk/_silk.pyx":259
  *                                    <int16_t *> buf,
  *                                    &n_bytes)
  *         if code != 0:             # <<<<<<<<<<<<<<
@@ -4832,7 +4872,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
     __pyx_t_1 = ((__pyx_v_code != 0) != 0);
     if (unlikely(__pyx_t_1)) {
 
-      /* "pysilk/_silk.pyx":258
+      /* "pysilk/_silk.pyx":260
  *                                    &n_bytes)
  *         if code != 0:
  *             PyMem_Free(buf)             # <<<<<<<<<<<<<<
@@ -4841,7 +4881,7 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
       PyMem_Free(__pyx_v_buf);
 
-      /* "pysilk/_silk.pyx":259
+      /* "pysilk/_silk.pyx":261
  *         if code != 0:
  *             PyMem_Free(buf)
  *             PyMem_Free(dec)             # <<<<<<<<<<<<<<
@@ -4850,16 +4890,16 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
       PyMem_Free(__pyx_v_dec);
 
-      /* "pysilk/_silk.pyx":260
+      /* "pysilk/_silk.pyx":262
  *             PyMem_Free(buf)
  *             PyMem_Free(dec)
  *             raise SilkError(code)             # <<<<<<<<<<<<<<
  *         output.write(<bytes> buf[:n_bytes * 2])
  *     PyMem_Free(buf)
  */
-      __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_SilkError); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 260, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_SilkError); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 262, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_4 = __Pyx_PyInt_From_int32_t(__pyx_v_code); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 260, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyInt_From_int32_t(__pyx_v_code); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 262, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __pyx_t_6 = NULL;
       if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_2))) {
@@ -4874,14 +4914,14 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
       __pyx_t_3 = (__pyx_t_6) ? __Pyx_PyObject_Call2Args(__pyx_t_2, __pyx_t_6, __pyx_t_4) : __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_4);
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 260, __pyx_L1_error)
+      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 262, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __Pyx_Raise(__pyx_t_3, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __PYX_ERR(0, 260, __pyx_L1_error)
+      __PYX_ERR(0, 262, __pyx_L1_error)
 
-      /* "pysilk/_silk.pyx":257
+      /* "pysilk/_silk.pyx":259
  *                                    <int16_t *> buf,
  *                                    &n_bytes)
  *         if code != 0:             # <<<<<<<<<<<<<<
@@ -4890,16 +4930,16 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
     }
 
-    /* "pysilk/_silk.pyx":261
+    /* "pysilk/_silk.pyx":263
  *             PyMem_Free(dec)
  *             raise SilkError(code)
  *         output.write(<bytes> buf[:n_bytes * 2])             # <<<<<<<<<<<<<<
  *     PyMem_Free(buf)
  *     PyMem_Free(dec)
  */
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_output, __pyx_n_s_write); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 261, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_output, __pyx_n_s_write); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 263, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_4 = __Pyx_PyBytes_FromStringAndSize(((const char*)__pyx_v_buf) + 0, (__pyx_v_n_bytes * 2) - 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 261, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyBytes_FromStringAndSize(((const char*)__pyx_v_buf) + 0, (__pyx_v_n_bytes * 2) - 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 263, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __pyx_t_6 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -4914,14 +4954,14 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
     __pyx_t_3 = (__pyx_t_6) ? __Pyx_PyObject_Call2Args(__pyx_t_2, __pyx_t_6, __pyx_t_4) : __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_4);
     __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 261, __pyx_L1_error)
+    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 263, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
   __pyx_L15_break:;
 
-  /* "pysilk/_silk.pyx":262
+  /* "pysilk/_silk.pyx":264
  *             raise SilkError(code)
  *         output.write(<bytes> buf[:n_bytes * 2])
  *     PyMem_Free(buf)             # <<<<<<<<<<<<<<
@@ -4929,14 +4969,14 @@ static CYTHON_INLINE void __pyx_f_6pysilk_5_silk_decode(PyObject *__pyx_v_input,
  */
   PyMem_Free(__pyx_v_buf);
 
-  /* "pysilk/_silk.pyx":263
+  /* "pysilk/_silk.pyx":265
  *         output.write(<bytes> buf[:n_bytes * 2])
  *     PyMem_Free(buf)
  *     PyMem_Free(dec)             # <<<<<<<<<<<<<<
  */
   PyMem_Free(__pyx_v_dec);
 
-  /* "pysilk/_silk.pyx":173
+  /* "pysilk/_silk.pyx":176
  *     PyMem_Free(enc)
  * 
  * cpdef inline void decode(object input,             # <<<<<<<<<<<<<<
@@ -5015,13 +5055,13 @@ static PyObject *__pyx_pw_6pysilk_5_silk_3decode(PyObject *__pyx_self, PyObject 
         case  1:
         if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_output)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("decode", 0, 3, 8, 1); __PYX_ERR(0, 173, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("decode", 0, 3, 8, 1); __PYX_ERR(0, 176, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_sample_rate)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("decode", 0, 3, 8, 2); __PYX_ERR(0, 173, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("decode", 0, 3, 8, 2); __PYX_ERR(0, 176, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
@@ -5055,7 +5095,7 @@ static PyObject *__pyx_pw_6pysilk_5_silk_3decode(PyObject *__pyx_self, PyObject 
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "decode") < 0)) __PYX_ERR(0, 173, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "decode") < 0)) __PYX_ERR(0, 176, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -5078,22 +5118,22 @@ static PyObject *__pyx_pw_6pysilk_5_silk_3decode(PyObject *__pyx_self, PyObject 
     }
     __pyx_v_input = values[0];
     __pyx_v_output = values[1];
-    __pyx_v_sample_rate = __Pyx_PyInt_As_int32_t(values[2]); if (unlikely((__pyx_v_sample_rate == ((int32_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 175, __pyx_L3_error)
+    __pyx_v_sample_rate = __Pyx_PyInt_As_int32_t(values[2]); if (unlikely((__pyx_v_sample_rate == ((int32_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 178, __pyx_L3_error)
     if (values[3]) {
-      __pyx_v_frame_size = __Pyx_PyInt_As_int32_t(values[3]); if (unlikely((__pyx_v_frame_size == ((int32_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 176, __pyx_L3_error)
+      __pyx_v_frame_size = __Pyx_PyInt_As_int32_t(values[3]); if (unlikely((__pyx_v_frame_size == ((int32_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 179, __pyx_L3_error)
     } else {
       __pyx_v_frame_size = ((int32_t)0);
     }
     if (values[4]) {
-      __pyx_v_frames_per_packet = __Pyx_PyInt_As_int32_t(values[4]); if (unlikely((__pyx_v_frames_per_packet == ((int32_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 177, __pyx_L3_error)
+      __pyx_v_frames_per_packet = __Pyx_PyInt_As_int32_t(values[4]); if (unlikely((__pyx_v_frames_per_packet == ((int32_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 180, __pyx_L3_error)
     } else {
       __pyx_v_frames_per_packet = ((int32_t)1);
     }
     if (values[5]) {
-      __pyx_v_more_internal_decoder_frames = __Pyx_PyObject_IsTrue(values[5]); if (unlikely((__pyx_v_more_internal_decoder_frames == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 178, __pyx_L3_error)
+      __pyx_v_more_internal_decoder_frames = __Pyx_PyObject_IsTrue(values[5]); if (unlikely((__pyx_v_more_internal_decoder_frames == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 181, __pyx_L3_error)
     } else {
 
-      /* "pysilk/_silk.pyx":178
+      /* "pysilk/_silk.pyx":181
  *                   int32_t frame_size=0,
  *                   int32_t frames_per_packet=1,
  *                   bint more_internal_decoder_frames=False,             # <<<<<<<<<<<<<<
@@ -5103,15 +5143,15 @@ static PyObject *__pyx_pw_6pysilk_5_silk_3decode(PyObject *__pyx_self, PyObject 
       __pyx_v_more_internal_decoder_frames = ((int)0);
     }
     if (values[6]) {
-      __pyx_v_in_band_fec_offset = __Pyx_PyInt_As_int32_t(values[6]); if (unlikely((__pyx_v_in_band_fec_offset == ((int32_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 179, __pyx_L3_error)
+      __pyx_v_in_band_fec_offset = __Pyx_PyInt_As_int32_t(values[6]); if (unlikely((__pyx_v_in_band_fec_offset == ((int32_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 182, __pyx_L3_error)
     } else {
       __pyx_v_in_band_fec_offset = ((int32_t)0);
     }
     if (values[7]) {
-      __pyx_v_loss = __Pyx_PyObject_IsTrue(values[7]); if (unlikely((__pyx_v_loss == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 180, __pyx_L3_error)
+      __pyx_v_loss = __Pyx_PyObject_IsTrue(values[7]); if (unlikely((__pyx_v_loss == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 183, __pyx_L3_error)
     } else {
 
-      /* "pysilk/_silk.pyx":180
+      /* "pysilk/_silk.pyx":183
  *                   bint more_internal_decoder_frames=False,
  *                   int32_t in_band_fec_offset=0,
  *                   bint loss=False) with gil:             # <<<<<<<<<<<<<<
@@ -5123,7 +5163,7 @@ static PyObject *__pyx_pw_6pysilk_5_silk_3decode(PyObject *__pyx_self, PyObject 
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("decode", 0, 3, 8, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 173, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("decode", 0, 3, 8, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 176, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("pysilk._silk.decode", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -5131,7 +5171,7 @@ static PyObject *__pyx_pw_6pysilk_5_silk_3decode(PyObject *__pyx_self, PyObject 
   __pyx_L4_argument_unpacking_done:;
   __pyx_r = __pyx_pf_6pysilk_5_silk_2decode(__pyx_self, __pyx_v_input, __pyx_v_output, __pyx_v_sample_rate, __pyx_v_frame_size, __pyx_v_frames_per_packet, __pyx_v_more_internal_decoder_frames, __pyx_v_in_band_fec_offset, __pyx_v_loss);
 
-  /* "pysilk/_silk.pyx":173
+  /* "pysilk/_silk.pyx":176
  *     PyMem_Free(enc)
  * 
  * cpdef inline void decode(object input,             # <<<<<<<<<<<<<<
@@ -5161,7 +5201,7 @@ static PyObject *__pyx_pf_6pysilk_5_silk_2decode(CYTHON_UNUSED PyObject *__pyx_s
   __pyx_t_1.in_band_fec_offset = __pyx_v_in_band_fec_offset;
   __pyx_t_1.loss = __pyx_v_loss;
   __pyx_f_6pysilk_5_silk_decode(__pyx_v_input, __pyx_v_output, __pyx_v_sample_rate, 0, &__pyx_t_1); 
-  __pyx_t_2 = __Pyx_void_to_None(NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 173, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_void_to_None(NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 176, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_r = __pyx_t_2;
   __pyx_t_2 = 0;
@@ -5287,8 +5327,8 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {0, 0, 0, 0, 0, 0, 0}
 };
 static CYTHON_SMALL_CODE int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_n_s_TypeError); if (!__pyx_builtin_TypeError) __PYX_ERR(0, 107, __pyx_L1_error)
-  __pyx_builtin_MemoryError = __Pyx_GetBuiltinName(__pyx_n_s_MemoryError); if (!__pyx_builtin_MemoryError) __PYX_ERR(0, 138, __pyx_L1_error)
+  __pyx_builtin_MemoryError = __Pyx_GetBuiltinName(__pyx_n_s_MemoryError); if (!__pyx_builtin_MemoryError) __PYX_ERR(0, 55, __pyx_L1_error)
+  __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_n_s_TypeError); if (!__pyx_builtin_TypeError) __PYX_ERR(0, 111, __pyx_L1_error)
   return 0;
   __pyx_L1_error:;
   return -1;
