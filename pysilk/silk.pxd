@@ -52,17 +52,8 @@ void swap_i16(int16_t *data)
 */
 uint8_t is_le()
 {
-    int16_t data = 0x1234;
-    int8_t *p = (int8_t *)&data;
-    if (p[0]<p[1])
-    {
-        return 0;
-    }
-    else
-    {
-        return 1;
-    }
-
+    uint16_t data=1;
+    return *(uint8_t*)&data;
 }
 #ifdef _WIN32
     #define swap_i16 _byteswap_ushort
