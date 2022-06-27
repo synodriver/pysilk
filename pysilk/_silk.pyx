@@ -226,7 +226,7 @@ cpdef inline void decode(object input,
     if code != 0:
         PyMem_Free(dec)
         raise SilkError(code)
-    frame_size = sample_rate / 1000 * 40;
+    frame_size = sample_rate / 1000 * 40
     # cdef uint8_t buf[frame_size]  # otherwise need malloc
     cdef uint8_t *buf = <uint8_t *> PyMem_Malloc(frame_size)
     if buf == NULL:
