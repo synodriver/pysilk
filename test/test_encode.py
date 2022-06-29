@@ -30,3 +30,9 @@ class TestEncode(TestCase):
         pysilk.decode(inp, out, 24000)
         cy_data = out.getvalue()
         self.assertEqual(rs_data, cy_data)
+
+
+if __name__ == "__main__":
+    import unittest
+
+    unittest.main()
