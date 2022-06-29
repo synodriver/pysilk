@@ -1,1 +1,2 @@
 recursive-include pysilk  *
+recursive-include silk-v3-decoder/silk  *

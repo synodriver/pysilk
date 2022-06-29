@@ -52,3 +52,18 @@ def decode(input: BinaryIO, output: BinaryIO, sample_rate: int, frame_size: int 
 class SilkError(Exception):
     pass
 ```
+
+### ✨v0.2.0✨
+合并了[CFFI](https://github.com/synodriver/pysilk-cffi) 的工作
+
+### 本机编译
+```
+python -m pip install setuptools wheel cython cffi
+git clone https://github.com/synodriver/pysilk
+cd pysilk
+git submodule update --init --recursive
+python setup.py bdist_wheel --use-cython --use-cffi
+```
+
+### 后端选择
+默认由py实现决定，在cpython上自动选择cython后端，在pypy上自动选择cffi后端，使用```SILK_USE_CFFI```环境变量可以强制选择cffi

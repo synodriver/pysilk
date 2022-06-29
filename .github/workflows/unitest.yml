@@ -1,4 +1,4 @@
-name: build wheel
+name: unitest
 
 on:
   workflow_dispatch:
@@ -11,6 +11,7 @@ jobs:
       matrix:
         python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "pypy3.7", "pypy3.8"]
         os: [ubuntu-latest, macos-latest, windows-latest]
+      fail-fast: false
 
     steps:
     - uses: actions/checkout@v3
@@ -29,8 +30,8 @@ jobs:
         pip install cython
     - name: build_whl
       run: |
-        python setup.py sdist bdist_wheel --use-cython --use-cffi
-    - uses: actions/upload-artifact@v2
-      with:
-        name: ${{ matrix.os }}-${{ matrix.python-version }}
-        path: dist/*.whl
+        python setup.py install --use-cython --use-cffi
+    - name: Test with unitest
+      run: |
+        cd test
+        python test_encode.py

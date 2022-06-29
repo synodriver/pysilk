@@ -1,8 +1,9 @@
 import time
 from io import BytesIO
 
-import pysilk
 import rsilk
+
+import pysilk
 
 
 def encode(times: int):

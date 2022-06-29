@@ -3,6 +3,8 @@ cmake-build-release/
 silk-v3-decoder-master/
 */__pycache__/
 build/
+dist/
+out/
 lib/
 /_skbuild/
 .idea/

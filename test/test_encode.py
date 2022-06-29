@@ -1,7 +1,8 @@
-from unittest import TestCase
 from io import BytesIO
+from unittest import TestCase
 
 import rsilk
+
 import pysilk
 
 
