@@ -97,7 +97,7 @@ cpdef inline void encode(object input,
                   int32_t complexity = 2,
                   bint use_inband_fec = False,
                   bint use_dtx = False,
-                  bint tencent = True) with gil:
+                  bint tencent = True):
     """encode(input: BinaryIO, output: BinaryIO, sample_rate: int, bit_rate: int, max_internal_sample_rate: int = 24000, packet_loss_percentage: int = 0, complexity: int = 2, use_inband_fec: bool = False, use_dtx: bool = False, tencent: bool = True) -> bytes
     
     encode pcm to silk
@@ -156,6 +156,8 @@ cpdef inline void encode(object input,
         output.write(b"#!SILK_V3")
     cdef int16_t n_bytes = 1250
     cdef uint8_t payload[1250]
+    cdef int16_t* chunk_ptr
+    cdef int32_t chunk_size
     while True:
         chunk = input.read(frame_size)  # type: bytes
         if not PyBytes_Check(chunk):
@@ -165,12 +167,15 @@ cpdef inline void encode(object input,
         n_bytes = 1250
         if <int32_t> PyBytes_Size(chunk) < frame_size:
             break
-        code = SKP_Silk_SDK_Encode(enc,
-                                   &enc_control,
-                                   <int16_t *> PyBytes_AS_STRING(chunk),
-                                   <int32_t> (PyBytes_Size(chunk) / 2),
-                                   payload,
-                                   &n_bytes)
+        chunk_ptr = <int16_t *> PyBytes_AS_STRING(chunk)
+        chunk_size = <int32_t> (PyBytes_Size(chunk) / 2)
+        with nogil:
+            code = SKP_Silk_SDK_Encode(enc,
+                                    &enc_control,
+                                    chunk_ptr,
+                                    chunk_size,
+                                    payload,
+                                    &n_bytes)
         if code != 0:
             PyMem_Free(enc)
             raise SilkError(code)
@@ -186,7 +191,7 @@ cpdef inline void decode(object input,
                   int32_t frames_per_packet=1,
                   bint more_internal_decoder_frames=False,
                   int32_t in_band_fec_offset=0,
-                  bint loss=False) with gil:
+                  bint loss=False):
     """decode(input: BinaryIO, output: BinaryIO, sample_rate: int, frame_size: int = 0, frames_per_packet: int = 1, more_internal_decoder_frames: bool = False, in_band_fec_offset: int = 0, loss: bool = False) -> bytes
     
     decode silk to pcm
@@ -239,6 +244,7 @@ cpdef inline void decode(object input,
         PyMem_Free(dec)
         raise MemoryError
     cdef int16_t n_bytes
+    cdef const uint8_t *chunk_ptr
     while True:
         chunk = input.read(2)
         if PyBytes_Size(chunk) < 2:
@@ -255,13 +261,15 @@ cpdef inline void decode(object input,
             PyMem_Free(buf)
             PyMem_Free(dec)
             raise SilkError("INVALID")
-        code = SKP_Silk_SDK_Decode(dec,
-                                   &dec_control,
-                                   loss,
-                                   <const uint8_t *> PyBytes_AS_STRING(chunk),
-                                   <const int32_t> n_bytes,
-                                   <int16_t *> buf,
-                                   &n_bytes)
+        chunk_ptr = <const uint8_t *> PyBytes_AS_STRING(chunk)
+        with nogil:
+            code = SKP_Silk_SDK_Decode(dec,
+                                    &dec_control,
+                                    loss,
+                                    chunk_ptr,
+                                    <const int32_t> n_bytes,
+                                    <int16_t *> buf,
+                                    &n_bytes)
         if code != 0:
             PyMem_Free(buf)
             PyMem_Free(dec)
