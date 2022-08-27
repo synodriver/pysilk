@@ -88,16 +88,16 @@ cdef inline uint8_t PyFile_Check(object file):
         return 1
     return 0
 
-cpdef inline void encode(object input,
-                  object output,
-                  int32_t sample_rate,
-                  int32_t bit_rate,
-                  int32_t max_internal_sample_rate = 24000,
-                  int32_t packet_loss_percentage = 0,
-                  int32_t complexity = 2,
-                  bint use_inband_fec = False,
-                  bint use_dtx = False,
-                  bint tencent = True):
+def encode(object input,
+            object output,
+            int32_t sample_rate,
+            int32_t bit_rate,
+            int32_t max_internal_sample_rate = 24000,
+            int32_t packet_loss_percentage = 0,
+            int32_t complexity = 2,
+            bint use_inband_fec = False,
+            bint use_dtx = False,
+            bint tencent = True):
     """encode(input: BinaryIO, output: BinaryIO, sample_rate: int, bit_rate: int, max_internal_sample_rate: int = 24000, packet_loss_percentage: int = 0, complexity: int = 2, use_inband_fec: bool = False, use_dtx: bool = False, tencent: bool = True) -> bytes
     
     encode pcm to silk
@@ -184,14 +184,14 @@ cpdef inline void encode(object input,
         output.write(<bytes> payload[0:n_bytes])
     PyMem_Free(enc)
 
-cpdef inline void decode(object input,
-                  object output,
-                  int32_t sample_rate,
-                  int32_t frame_size=0,
-                  int32_t frames_per_packet=1,
-                  bint more_internal_decoder_frames=False,
-                  int32_t in_band_fec_offset=0,
-                  bint loss=False):
+def decode(object input,
+            object output,
+            int32_t sample_rate,
+            int32_t frame_size=0,
+            int32_t frames_per_packet=1,
+            bint more_internal_decoder_frames=False,
+            int32_t in_band_fec_offset=0,
+            bint loss=False):
     """decode(input: BinaryIO, output: BinaryIO, sample_rate: int, frame_size: int = 0, frames_per_packet: int = 1, more_internal_decoder_frames: bool = False, in_band_fec_offset: int = 0, loss: bool = False) -> bytes
     
     decode silk to pcm
