@@ -3,7 +3,6 @@ from typing import IO
 
 from pysilk.backends.cffi._silk_cffi import ffi, lib
 
-__version__ = "0.1.0.rc1"
 
 
 class SilkError(Exception):
