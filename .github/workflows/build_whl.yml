@@ -9,7 +9,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "pypy3.7", "pypy3.8"]
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "pypy3.7", "pypy3.8"]
         os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
@@ -30,7 +30,7 @@ jobs:
     - name: build_whl
       run: |
         python setup.py sdist bdist_wheel --use-cython --use-cffi
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: ${{ matrix.os }}-${{ matrix.python-version }}
         path: dist/*.whl

@@ -35,8 +35,8 @@ if sys.byteorder != "little":
     macro_base.append(("WORDS_BIGENDIAN", None))
 extensions = [
     Extension(
-        "pysilk.backends.cython._silk_cy",
-        ["pysilk/backends/cython/_silk_cy.pyx"]
+        "pysilk.backends.cython._silk",
+        ["pysilk/backends/cython/_silk.pyx"]
         + glob.glob("./silk-v3-decoder/silk/src/*.c"),
         include_dirs=["./silk-v3-decoder/silk/interface"],
         define_macros=macro_base,

@@ -86,7 +86,7 @@ macro_base = []
 if sys.byteorder != "little":
     macro_base.append(("WORDS_BIGENDIAN", None))
 ffibuilder.set_source(
-    "pysilk.backends.cffi._silk_cffi",
+    "pysilk.backends.cffi._silk",
     source,
     sources=glob.glob("./silk-v3-decoder/silk/src/*.c"),
     include_dirs=["./silk-v3-decoder/silk/interface"],

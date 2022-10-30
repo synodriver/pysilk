@@ -1,7 +1,7 @@
 import struct
 from typing import IO
 
-from pysilk.backends.cffi._silk_cffi import ffi, lib
+from pysilk.backends.cffi._silk import ffi, lib
 
 
 
