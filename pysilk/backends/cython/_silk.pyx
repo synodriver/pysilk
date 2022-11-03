@@ -158,31 +158,31 @@ def encode(object input,
     cdef uint8_t payload[1250]
     cdef int16_t* chunk_ptr
     cdef int32_t chunk_size
-    while True:
-        chunk = input.read(frame_size)  # type: bytes
-        if not PyBytes_Check(chunk):
-            PyMem_Free(enc)
-            raise TypeError(f"input must be a file-like rb object, got {type(input).__name__}")
+    try:
+        while True:
+            chunk = input.read(frame_size)  # type: bytes
+            if not PyBytes_Check(chunk):
+                raise TypeError(f"input must be a file-like rb object, got {type(input).__name__}")
 
-        n_bytes = 1250
-        if <int32_t> PyBytes_Size(chunk) < frame_size:
-            break
-        chunk_ptr = <int16_t *> PyBytes_AS_STRING(chunk)
-        chunk_size = <int32_t> (PyBytes_Size(chunk) / 2)
-        with nogil:
-            code = SKP_Silk_SDK_Encode(enc,
-                                    &enc_control,
-                                    chunk_ptr,
-                                    chunk_size,
-                                    payload,
-                                    &n_bytes)
-        if code != 0:
-            PyMem_Free(enc)
-            raise SilkError(code)
+            n_bytes = 1250
+            if <int32_t> PyBytes_Size(chunk) < frame_size:
+                break
+            chunk_ptr = <int16_t *> PyBytes_AS_STRING(chunk)
+            chunk_size = <int32_t> (PyBytes_Size(chunk) / 2)
+            with nogil:
+                code = SKP_Silk_SDK_Encode(enc,
+                                        &enc_control,
+                                        chunk_ptr,
+                                        chunk_size,
+                                        payload,
+                                        &n_bytes)
+            if code != 0:
+                raise SilkError(code)
 
-        write_i16_le(output, n_bytes)
-        output.write(<bytes> payload[0:n_bytes])
-    PyMem_Free(enc)
+            write_i16_le(output, n_bytes)
+            output.write(<bytes> payload[0:n_bytes])
+    finally:
+        PyMem_Free(enc)
 
 def decode(object input,
             object output,
@@ -245,35 +245,31 @@ def decode(object input,
         raise MemoryError
     cdef int16_t n_bytes
     cdef const uint8_t *chunk_ptr
-    while True:
-        chunk = input.read(2)
-        if PyBytes_Size(chunk) < 2:
-            break
-        n_bytes = bytes_to_i16(chunk)
-        if SHOULD_SWAP:
-            n_bytes = swap_i16(n_bytes)
-        if n_bytes > <int16_t> frame_size:
-            PyMem_Free(buf)
-            PyMem_Free(dec)
-            raise SilkError("INVALID")
-        chunk = input.read(n_bytes)  # type: bytes
-        if <int16_t> PyBytes_Size(chunk) < n_bytes:  # not enough data
-            PyMem_Free(buf)
-            PyMem_Free(dec)
-            raise SilkError("INVALID")
-        chunk_ptr = <const uint8_t *> PyBytes_AS_STRING(chunk)
-        with nogil:
-            code = SKP_Silk_SDK_Decode(dec,
-                                    &dec_control,
-                                    loss,
-                                    chunk_ptr,
-                                    <const int32_t> n_bytes,
-                                    <int16_t *> buf,
-                                    &n_bytes)
-        if code != 0:
-            PyMem_Free(buf)
-            PyMem_Free(dec)
-            raise SilkError(code)
-        output.write(<bytes> buf[:n_bytes * 2])
-    PyMem_Free(buf)
-    PyMem_Free(dec)
+    try:
+        while True:
+            chunk = input.read(2)
+            if PyBytes_Size(chunk) < 2:
+                break
+            n_bytes = bytes_to_i16(chunk)
+            if SHOULD_SWAP:
+                n_bytes = swap_i16(n_bytes)
+            if n_bytes > <int16_t> frame_size:
+                raise SilkError("INVALID")
+            chunk = input.read(n_bytes)  # type: bytes
+            if <int16_t> PyBytes_Size(chunk) < n_bytes:  # not enough data
+                raise SilkError("INVALID")
+            chunk_ptr = <const uint8_t *> PyBytes_AS_STRING(chunk)
+            with nogil:
+                code = SKP_Silk_SDK_Decode(dec,
+                                        &dec_control,
+                                        loss,
+                                        chunk_ptr,
+                                        <const int32_t> n_bytes,
+                                        <int16_t *> buf,
+                                        &n_bytes)
+            if code != 0:
+                raise SilkError(code)
+            output.write(<bytes> buf[:n_bytes * 2])
+    finally:
+        PyMem_Free(buf)
+        PyMem_Free(dec)

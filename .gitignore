@@ -9,8 +9,10 @@ lib/
 /_skbuild/
 .idea/
 *.pyd
+*.pyc
 *.exe
 *.dll
 *.lib
 *.a
 *.so
+silk_python.egg-info/

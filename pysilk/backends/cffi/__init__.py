@@ -142,28 +142,28 @@ def encode(
         output.write(b"#!SILK_V3")
     n_bytes = ffi.new("int16_t *", 1250)
     payload = ffi.new("uint8_t[1250]")
-    while True:
-        chunk = input.read(frame_size)  # type: bytes
-        if not isinstance(chunk, bytes):
-            lib.PyMem_Free(enc)
-            raise TypeError(
-                f"input must be a file-like rb object, got {type(input).__name__}"
+    try:
+        while True:
+            chunk = input.read(frame_size)  # type: bytes
+            if not isinstance(chunk, bytes):
+                raise TypeError(
+                    f"input must be a file-like rb object, got {type(input).__name__}"
+                )
+
+            n_bytes[0] = 1250
+            if len(chunk) < frame_size:
+                break
+            c_chunk = ffi.from_buffer("int16_t[]", chunk)
+            code = lib.SKP_Silk_SDK_Encode(
+                enc, enc_control, c_chunk, len(chunk) // 2, payload, n_bytes
             )
+            if code != 0:
+                raise SilkError(code)
 
-        n_bytes[0] = 1250
-        if len(chunk) < frame_size:
-            break
-        c_chunk = ffi.from_buffer("int16_t[]", chunk)
-        code = lib.SKP_Silk_SDK_Encode(
-            enc, enc_control, c_chunk, len(chunk) // 2, payload, n_bytes
-        )
-        if code != 0:
-            lib.PyMem_Free(enc)
-            raise SilkError(code)
-
-        write_i16_le(output, n_bytes[0])
-        output.write(ffi.unpack(ffi.cast("char *", payload), n_bytes[0]))
-    lib.PyMem_Free(enc)
+            write_i16_le(output, n_bytes[0])
+            output.write(ffi.unpack(ffi.cast("char *", payload), n_bytes[0]))
+    finally:
+        lib.PyMem_Free(enc)
 
 
 def decode(
@@ -233,36 +233,32 @@ def decode(
         lib.PyMem_Free(dec)
         raise MemoryError
     n_bytes = ffi.new("int16_t *")
-    while True:
-        chunk = input.read(2)
-        if len(chunk) < 2:
-            break
-        n_bytes[0] = bytes_to_i16(chunk)
-        if lib.SHOULD_SWAP():
-            n_bytes[0] = lib.swap_i16(n_bytes[0])
-        if n_bytes[0] > frame_size:
-            lib.PyMem_Free(buf)
-            lib.PyMem_Free(dec)
-            raise SilkError("INVALID")
-        chunk = input.read(n_bytes[0])  # type: bytes
-        if len(chunk) < n_bytes[0]:  # not enough data
-            lib.PyMem_Free(buf)
-            lib.PyMem_Free(dec)
-            raise SilkError("INVALID")
-        c_chunk = ffi.from_buffer("uint8_t[]", chunk)
-        code = lib.SKP_Silk_SDK_Decode(
-            dec,
-            dec_control,
-            loss,
-            c_chunk,
-            n_bytes[0],
-            ffi.cast("int16_t *", buf),
-            n_bytes,
-        )
-        if code != 0:
-            lib.PyMem_Free(buf)
-            lib.PyMem_Free(dec)
-            raise SilkError(code)
-        output.write(ffi.unpack(ffi.cast("char*", buf), n_bytes[0] * 2))
-    lib.PyMem_Free(buf)
-    lib.PyMem_Free(dec)
+    try:
+        while True:
+            chunk = input.read(2)
+            if len(chunk) < 2:
+                break
+            n_bytes[0] = bytes_to_i16(chunk)
+            if lib.SHOULD_SWAP():
+                n_bytes[0] = lib.swap_i16(n_bytes[0])
+            if n_bytes[0] > frame_size:
+                raise SilkError("INVALID")
+            chunk = input.read(n_bytes[0])  # type: bytes
+            if len(chunk) < n_bytes[0]:  # not enough data
+                raise SilkError("INVALID")
+            c_chunk = ffi.from_buffer("uint8_t[]", chunk)
+            code = lib.SKP_Silk_SDK_Decode(
+                dec,
+                dec_control,
+                loss,
+                c_chunk,
+                n_bytes[0],
+                ffi.cast("int16_t *", buf),
+                n_bytes,
+            )
+            if code != 0:
+                raise SilkError(code)
+            output.write(ffi.unpack(ffi.cast("char*", buf), n_bytes[0] * 2))
+    finally:
+        lib.PyMem_Free(buf)
+        lib.PyMem_Free(dec)
