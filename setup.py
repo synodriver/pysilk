@@ -67,6 +67,9 @@ def has_option(name: str) -> bool:
     if name in sys.argv[1:]:
         sys.argv.remove(name)
         return True
+    name = name.strip("-").upper()
+    if os.environ.get(name, None) is not None:
+        return True
     return False
 
 
@@ -75,7 +78,7 @@ install_requires = []
 setup_kw = {}
 if has_option("--use-cython"):
     print("building cython")
-    setup_requires.append("cython")
+    setup_requires.append("Cython>=3.0.9")
     setup_kw["ext_modules"] = cythonize(
         extensions,
         compiler_directives={
@@ -119,8 +122,6 @@ def main():
             "Programming Language :: C",
             "Programming Language :: Cython",
             "Programming Language :: Python",
-            "Programming Language :: Python :: 3.6",
-            "Programming Language :: Python :: 3.7",
             "Programming Language :: Python :: 3.8",
             "Programming Language :: Python :: 3.9",
             "Programming Language :: Python :: 3.10",
