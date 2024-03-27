@@ -19,4 +19,4 @@ if not _should_use_cffi():
 else:
     from pysilk.backends.cffi import *
 
-__version__ = "0.2.5"
+__version__ = "0.2.6"
