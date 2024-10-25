@@ -7,6 +7,8 @@ from collections import defaultdict
 
 try:
     from Cython.Build import cythonize
+    from Cython.Compiler.Version import version as cython_version
+    from packaging.version import Version
 except ImportError:
     Cython = None
 from setuptools import Extension, find_packages, setup
@@ -33,6 +35,15 @@ class build_ext_compiler_check(build_ext):
 macro_base = []
 if sys.byteorder != "little":
     macro_base.append(("WORDS_BIGENDIAN", None))
+if (
+    sys.version_info > (3, 13, 0)
+    and hasattr(sys, "_is_gil_enabled")
+    and not sys._is_gil_enabled()
+):
+    print("build nogil")
+    macro_base.append(
+        ("Py_GIL_DISABLED", "1"),
+    )  # ("CYTHON_METH_FASTCALL", "1"), ("CYTHON_VECTORCALL",  1)]
 extensions = [
     Extension(
         "pysilk.backends.cython._silk",
@@ -72,6 +83,16 @@ def has_option(name: str) -> bool:
         return True
     return False
 
+compiler_directives = {
+    "cdivision": True,
+    "embedsignature": True,
+    "boundscheck": False,
+    "wraparound": False,
+}
+
+
+if Version(cython_version) >= Version("3.1.0a0"):
+    compiler_directives["freethreading_compatible"] = True
 
 setup_requires = []
 install_requires = []
@@ -81,12 +102,7 @@ if has_option("--use-cython"):
     setup_requires.append("Cython>=3.0.9")
     setup_kw["ext_modules"] = cythonize(
         extensions,
-        compiler_directives={
-            "cdivision": True,
-            "embedsignature": True,
-            "boundscheck": False,
-            "wraparound": False,
-        },
+        compiler_directives=compiler_directives,
     )
 if has_option("--use-cffi"):
     print("building cffi")
