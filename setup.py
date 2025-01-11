@@ -3,6 +3,7 @@ import glob
 import os
 import re
 import sys
+import sysconfig
 from collections import defaultdict
 
 try:
@@ -31,15 +32,15 @@ class build_ext_compiler_check(build_ext):
             ext.extra_compile_args.extend(args)
         super().build_extensions()
 
+def is_freethread():
+    if sysconfig.get_config_var("Py_GIL_DISABLED"):
+        return True
+    return False
 
 macro_base = []
 if sys.byteorder != "little":
     macro_base.append(("WORDS_BIGENDIAN", None))
-if (
-    sys.version_info > (3, 13, 0)
-    and hasattr(sys, "_is_gil_enabled")
-    and not sys._is_gil_enabled()
-):
+if is_freethread():
     print("build nogil")
     macro_base.append(
         ("Py_GIL_DISABLED", "1"),
