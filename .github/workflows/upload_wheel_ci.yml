@@ -18,7 +18,6 @@ jobs:
       CIBW_ARCHS_MACOS: "x86_64 universal2 arm64"
       CIBW_ENVIRONMENT: USE-CYTHON="1" USE-CFFI="1"
       CIBW_PROJECT_REQUIRES_PYTHON: ">=3.8"
-      CIBW_ENABLE: "cpython-freethreading"
     steps:
     - uses: actions/checkout@v4
     - name: Check out recursively
