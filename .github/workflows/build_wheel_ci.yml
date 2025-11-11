@@ -20,6 +20,7 @@ jobs:
       CIBW_PROJECT_REQUIRES_PYTHON: ">=3.8"
       CIBW_ENABLE: "cpython-freethreading"
       CIBW_ALLOW_EMPTY: True
+      CIBW_SKIP: "cp313t-*"
     steps:
     - uses: actions/checkout@v4
     - name: Check out recursively
