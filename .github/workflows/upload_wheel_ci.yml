@@ -17,20 +17,20 @@ jobs:
       CIBW_ARCHS_WINDOWS: "AMD64 x86 ARM64"
       CIBW_ARCHS_MACOS: "x86_64 universal2 arm64"
       CIBW_ENVIRONMENT: USE-CYTHON="1" USE-CFFI="1"
-      CIBW_PROJECT_REQUIRES_PYTHON: ">=3.8"
+      CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
       CIBW_ENABLE: "cpython-freethreading"
       CIBW_ALLOW_EMPTY: True
       CIBW_SKIP: "cp313t-*"
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Check out recursively
       run: git submodule update --init --recursive
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: "3.13"
     - name: Set up QEMU
       if: runner.os == 'Linux'
-      uses: docker/setup-qemu-action@v3
+      uses: docker/setup-qemu-action@v4
       with:
         platforms: all
     - name: Install cibuildwheel
@@ -39,4 +39,4 @@ jobs:
       run: python -m cibuildwheel --output-dir wheelhouse
     - name: Publish package
       run: |
-        twine upload ./wheelhouse/*.whl -u ${{ secrets.PYPI_USER }} -p ${{ secrets.PYPI_PASSWORD }}
+        twine upload --skip-existing ./wheelhouse/*.whl -u ${{ secrets.PYPI_USER }} -p ${{ secrets.PYPI_PASSWORD }}
