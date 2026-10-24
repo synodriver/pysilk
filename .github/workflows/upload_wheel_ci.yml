@@ -18,7 +18,7 @@ jobs:
       CIBW_ARCHS_MACOS: "x86_64 universal2 arm64"
       CIBW_ENVIRONMENT: USE-CYTHON="1" USE-CFFI="1"
       CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
-      CIBW_ENABLE: "cpython-freethreading"
+      # CIBW_ENABLE: "cpython-freethreading"
       CIBW_ALLOW_EMPTY: True
       CIBW_SKIP: "cp313t-*"
     steps:
