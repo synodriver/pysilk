@@ -22,10 +22,10 @@ jobs:
       CIBW_ALLOW_EMPTY: True
       CIBW_SKIP: "cp313t-*"
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Check out recursively
       run: git submodule update --init --recursive
-    - uses: actions/setup-python@v6
+    - uses: actions/setup-python@v7
       with:
         python-version: "3.13"
     - name: Set up QEMU
@@ -34,7 +34,7 @@ jobs:
       with:
         platforms: all
     - name: Install cibuildwheel
-      run: python -m pip install cibuildwheel==3.2.1
+      run: python -m pip install cibuildwheel==4.3.4
     - name: Build wheels
       run: python -m cibuildwheel --output-dir wheelhouse
     - uses: actions/upload-artifact@v7
