@@ -5,15 +5,24 @@ on:
 
 jobs:
   build:
-    name: Build wheels on ${{ matrix.os }}
+    name: Build wheels on ${{ matrix.os }} (${{ matrix.linux-arch || 'all' }})
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-22.04, windows-2025, macos-latest, macos-15-intel]
+        include:
+          - os: ubuntu-22.04
+            linux-arch: x86_64
+          - os: ubuntu-24.04-arm
+            linux-arch: aarch64
+          - os: ubuntu-22.04
+            linux-arch: riscv64
+          - os: windows-2025
+          - os: macos-latest
+          - os: macos-15-intel
       fail-fast: false
     env:
       CIBW_BEFORE_BUILD: pip install -r requirements.txt
-      CIBW_ARCHS_LINUX: "x86_64 aarch64 riscv64"
+      CIBW_ARCHS_LINUX: ${{ matrix.linux-arch || 'auto' }}
       CIBW_ARCHS_WINDOWS: "AMD64 x86 ARM64"
       CIBW_ARCHS_MACOS: "x86_64 universal2 arm64"
       CIBW_ENVIRONMENT: USE-CYTHON="1" USE-CFFI="1"
@@ -29,15 +38,15 @@ jobs:
       with:
         python-version: "3.13"
     - name: Set up QEMU
-      if: runner.os == 'Linux'
+      if: runner.os == 'Linux' && matrix.linux-arch == 'riscv64'
       uses: docker/setup-qemu-action@v4
       with:
-        platforms: all
+        platforms: riscv64
     - name: Install cibuildwheel
       run: python -m pip install cibuildwheel==4.3.4
     - name: Build wheels
       run: python -m cibuildwheel --output-dir wheelhouse
     - uses: actions/upload-artifact@v7
       with:
-        name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
+        name: cibw-wheels-${{ matrix.os }}-${{ matrix.linux-arch || 'all' }}
         path: ./wheelhouse/*.whl
